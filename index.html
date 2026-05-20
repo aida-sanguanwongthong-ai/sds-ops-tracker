@@ -77,16 +77,6 @@
   <span>Heiwajima · Accumulated vs Planned</span>
 </header>
 
-<!-- CONFIG -->
-<section>
-  <div class="row" style="gap:20px">
-    <div class="row"><label>Daily target (hrs)&nbsp;</label><input type="number" id="daily-target" value="10" min="1" max="24" style="width:70px" onchange="rerender()"></div>
-    <div class="row"><label>75% milestone (hrs)&nbsp;</label><input type="number" id="threshold" value="200" min="1" style="width:80px" onchange="rerender()"></div>
-    <div class="row"><label>Days/week&nbsp;</label><input type="number" id="days-week" value="5" min="1" max="7" style="width:60px" onchange="rerender()"></div>
-    <div class="row"><label>Planned start date&nbsp;</label><input type="date" id="plan-start" value="2026-05-12" onchange="rerender()" style="width:140px"></div>
-    <span id="status-msg">No data loaded</span>
-  </div>
-</section>
 
 <!-- SLACK INPUT -->
 <section>
@@ -100,12 +90,6 @@
     <button class="sec" onclick="document.getElementById('slack-paste').value='';document.getElementById('slack-preview').innerHTML=''">Clear</button>
   </div>
   <div id="slack-preview"></div>
-</section>
-
-<!-- ROUTE FILTER -->
-<section>
-  <div class="row" style="margin-bottom:8px"><label>Route filter</label><span style="font-size:11px;color:var(--muted)"> — deselect to exclude from totals & chart</span></div>
-  <div id="route-filter-wrap" class="row"><span style="font-size:11px;color:var(--muted)">Appears after data is loaded</span></div>
 </section>
 
 <!-- STATS -->
@@ -142,13 +126,13 @@
       <tr>
         <th>Date</th>
         <th>Op Start</th><th>Op End</th>
-        <th class="r">G2G</th><th class="r">Lunch</th><th class="r">Total hrs</th>
+        <th class="r">G2G</th><th class="r">Urban hrs</th>
         <th class="r">Plan hrs</th><th class="r">Plan Accum.</th>
-        <th class="r">Actual Accum.</th><th class="r">Δ vs Plan</th><th></th>
+        <th class="r">Actual Accum.</th><th class="r">Δ vs Plan</th>
       </tr>
     </thead>
     <tbody id="table-body">
-      <tr><td colspan="11" style="text-align:center;color:#475569;padding:24px">No data</td></tr>
+      <tr><td colspan="9" style="text-align:center;color:#475569;padding:24px">No data</td></tr>
     </tbody>
   </table>
 </section>
@@ -307,7 +291,7 @@ const SEED_DATA = [
      {route:'Heiwajima urban route (ロータリーなし)',lap:7,  startTime:'16:10',startMins:970, lapMins:26},
      {route:'Heiwajima urban route (ロータリーなし)',lap:8,  startTime:'16:38',startMins:998, lapMins:22},
    ]},
-  {date:'2026-05-18',routes:['Heiwajima'],source:'history',opStart:'07:39',opEnd:'19:39',g2gMins:720, lunchMins:120,totalHrs:10.00,startOdo:72402,endOdo:72533,km:130, planHrs:10,
+  {date:'2026-05-18',routes:['Heiwajima'],source:'history',opStart:'07:39',opEnd:'19:39',g2gMins:720, lunchMins:120,totalHrs:10.00,startOdo:72402,endOdo:72533,km:130, planHrs:8,
    laps:[
      {route:'Heiwajima urban route (ロータリーなし)',lap:1,  startTime:'07:39',startMins:459,  lapMins:26},
      {route:'Heiwajima urban route (ロータリーなし)',lap:2,  startTime:'08:14',startMins:494,  lapMins:26},
@@ -329,7 +313,7 @@ const SEED_DATA = [
      {route:'Heiwajima urban route (ロータリーなし)',lap:18, startTime:'18:35',startMins:1115, lapMins:27},
      {route:'Heiwajima urban route (ロータリーなし)',lap:19, startTime:'19:05',startMins:1145, lapMins:22},
    ]},
-  {date:'2026-05-19',routes:['Heiwajima'],source:'history',opStart:'07:24',opEnd:'19:35',g2gMins:731, lunchMins:180,totalHrs:9.18, startOdo:72533,endOdo:72654,km:121, planHrs:10,
+  {date:'2026-05-19',routes:['Heiwajima'],source:'history',opStart:'07:24',opEnd:'19:35',g2gMins:731, lunchMins:180,totalHrs:9.18, startOdo:72533,endOdo:72654,km:121, planHrs:8,
    laps:[
      {route:'Heiwajima urban route (ロータリーなし)',lap:1,  startTime:'07:31',startMins:451,  lapMins:26},
      {route:'Heiwajima urban route (ロータリーなし)',lap:2,  startTime:'08:02',startMins:482,  lapMins:24},
@@ -349,7 +333,7 @@ const SEED_DATA = [
      {route:'Heiwajima urban route (ロータリーなし)',lap:16, startTime:'18:19',startMins:1099, lapMins:29},
      {route:'Heiwajima urban route (ロータリーなし)',lap:17, startTime:'18:50',startMins:1130, lapMins:22},
    ]},
-  {date:'2026-05-20',routes:['Heiwajima'],source:'history',opStart:'07:20',opEnd:'19:50',g2gMins:750, lunchMins:150,totalHrs:10.00,startOdo:72654,endOdo:72794,km:140, planHrs:10,
+  {date:'2026-05-20',routes:['Heiwajima'],source:'history',opStart:'07:20',opEnd:'19:50',g2gMins:750, lunchMins:150,totalHrs:10.00,startOdo:72654,endOdo:72794,km:140, planHrs:8,
    laps:[
      {route:'Heiwajima urban route (ロータリーなし)',lap:1,  startTime:'07:30',startMins:450,  lapMins:24},
      {route:'Heiwajima urban route (ロータリーなし)',lap:2,  startTime:'07:58',startMins:478,  lapMins:23},
@@ -376,8 +360,6 @@ const SEED_DATA = [
 
 // ── STATE ──────────────────────────────────────────────────────────────────
 let log = [];
-let activeRoutes = new Set();
-let allRoutes    = new Set();
 let pendingSlack = null;
 let chartInstance = null;
 
@@ -415,6 +397,20 @@ function minsToTime24(m) {
 // Auto lunch: 60 min if G2G > 4h, else 0
 function autoLunch(g2gMins) {
   return (g2gMins !== null && g2gMins > 240) ? 60 : 0;
+}
+
+// Returns true for Heiwajima urban route variants (all merge/no-merge/rotary variants)
+const isHeiwajimaUrban = s => /heiwajima\s+urban|^urban\s+(merge|no.?merge)/i.test(s || '');
+
+// Sum only Heiwajima urban lap minutes for a day entry
+function hwHrs(d) {
+  if (d.laps && d.laps.length) {
+    const mins = d.laps
+      .filter(l => isHeiwajimaUrban(l.route))
+      .reduce((sum, l) => sum + (l.lapMins || 0), 0);
+    return +(mins / 60).toFixed(2);
+  }
+  return d.totalHrs || 0;  // fallback for entries without lap detail
 }
 
 // Parse duration string "4:15" or "1:00" → minutes
@@ -540,7 +536,7 @@ function parseSlack() {
     g2gMins, lunchMins, totalHrs,
     startOdo, endOdo,
     km: startOdo&&endOdo ? endOdo-startOdo : null,
-    planHrs: toNum(document.getElementById('daily-target').value),
+    planHrs: 10,
     otherRoutes: excludedRoutes,
     laps,
   };
@@ -564,11 +560,10 @@ function parseSlack() {
   ].filter(Boolean);
 
   preview.innerHTML = `<div class="preview-box">${rows.join('<br>')}</div>`;
-  document.getElementById('status-msg').textContent = 'Parsed ✓ — click "Add to Log ↓" to confirm';
 }
 
 function commitSlack() {
-  if (!pendingSlack) { document.getElementById('status-msg').textContent = 'Parse a thread first.'; return; }
+  if (!pendingSlack) return;
   const p = pendingSlack;
   const existing = log.findIndex(r => r.date === p.date);
   if (existing >= 0 && !confirm(`Entry for ${p.date} already exists. Overwrite?`)) return;
@@ -576,53 +571,34 @@ function commitSlack() {
 
   log.push({ ...p });
   log.sort((a,b) => a.date.localeCompare(b.date));
-  p.routes.forEach(r => { allRoutes.add(r); activeRoutes.add(r); });
-  if (!p.routes.length) { allRoutes.add('Heiwajima'); activeRoutes.add('Heiwajima'); }
-  renderRouteFilter(); rerender();
+  rerender();
 
   pendingSlack = null;
   document.getElementById('slack-paste').value = '';
   document.getElementById('slack-preview').innerHTML = '';
-  document.getElementById('status-msg').textContent = `✓ Added ${p.date} — ${log.length} days in log`;
 }
 
-// ── ROUTE FILTER ──────────────────────────────────────────────────────────
-function renderRouteFilter() {
-  const wrap = document.getElementById('route-filter-wrap');
-  if (!allRoutes.size) return;
-  wrap.innerHTML = [...allRoutes].map(r =>
-    `<div class="route-tag ${activeRoutes.has(r)?'active':'inactive'}" onclick="toggleRoute(${JSON.stringify(r)})">
-      ${r||'(unnamed)'}
-    </div>`
-  ).join('');
-}
-
-function toggleRoute(r) {
-  activeRoutes.has(r) ? activeRoutes.delete(r) : activeRoutes.add(r);
-  renderRouteFilter(); rerender();
-}
 
 // ── RENDER ────────────────────────────────────────────────────────────────
 function getFiltered() {
-  return log.filter(r => !r.routes.length || r.routes.some(rt => activeRoutes.has(rt)));
+  return log;
 }
 
 function rerender() {
   const data = getFiltered();
   if (!data.length) return;
-  const planStart = document.getElementById('plan-start').value || '2026-05-12';
+  const planStart = '2026-05-12';
 
-  // First pass: compute actual accumulation for all rows
+  // First pass: compute actual accumulation (Heiwajima urban laps only)
   let aAccum = 0;
   const withActual = data.map(d => {
-    aAccum = +(aAccum + (d.totalHrs||0)).toFixed(2);
-    return { ...d, aAccum };
+    const urban = hwHrs(d);
+    aAccum = +(aAccum + urban).toFixed(2);
+    return { ...d, urbanHrs: urban, aAccum };
   });
 
-  // Planned baseline = actual accumulated on planStart (5/12)
-  const planAnchor = withActual.find(r => r.date === planStart);
-  const planOffset = planAnchor ? planAnchor.aAccum
-    : ([...withActual].reverse().find(r => r.date < planStart) || {aAccum:0}).aAccum;
+  // Planned baseline = actual accumulated on last day before planStart (5/7)
+  const planOffset = ([...withActual].reverse().find(r => r.date < planStart) || {aAccum:0}).aAccum;
 
   // Stepped daily rate:
   //   planStart itself  → 0 (anchor day, no addition)
@@ -636,7 +612,7 @@ function rerender() {
   const rows = withActual.map(d => {
     if (d.date > planStart) {
       let rate = 0;
-      if (d.date >= FULL_START)       rate = d.planHrs || 10;
+      if (d.date >= FULL_START)       rate = d.planHrs || 8;
       else if (d.date >= RAMP_START)  rate = 5;
       pExtra = +(pExtra + rate).toFixed(2);
     }
@@ -645,7 +621,7 @@ function rerender() {
   });
 
   // Project future days until planned×75% >= threshold
-  const threshold  = toNum(document.getElementById('threshold').value) || 200;
+  const threshold  = 200;
   const lastRow    = rows[rows.length - 1];
   const projRows   = [];
   if (lastRow && lastRow.pAccum !== null && lastRow.pAccum * 0.75 < threshold) {
@@ -656,7 +632,7 @@ function rerender() {
       const d = new Date(curDate + 'T00:00:00');
       d.setDate(d.getDate() + 1);
       curDate   = d.toISOString().slice(0, 10);
-      curPAccum = +(curPAccum + (toNum(document.getElementById('daily-target').value) || 10)).toFixed(2);
+      curPAccum = +(curPAccum + 8).toFixed(2);
       projRows.push({ date: curDate, pAccum: curPAccum, aAccum: null, totalHrs: null,
         routes: [], source: 'projected', opStart: null, opEnd: null,
         g2gMins: null, lunchMins: null, planHrs: null });
@@ -731,13 +707,11 @@ function renderTable(rows) {
       <td>${r.opStart||'—'}</td>
       <td>${r.opEnd||'—'}</td>
       <td class="r">${r.g2gMins!=null?fmtDur(r.g2gMins):'—'}</td>
-      <td class="r">${r.lunchMins?fmtDur(r.lunchMins):'—'}</td>
-      <td class="r info">${fmtH(r.totalHrs)}</td>
+      <td class="r info">${fmtH(r.urbanHrs)}</td>
       <td class="r">${fmtH(r.planHrs)}</td>
       <td class="r ok">${r.pAccum!==null?fmtH(r.pAccum):'—'}</td>
       <td class="r info">${fmtH(r.aAccum)}</td>
       <td class="r ${delta===null?'':(delta>=0?'ok':'warn')}">${delta!==null?(delta>=0?'+':'')+fmtH(delta):'—'}</td>
-      <td><button class="danger" onclick="deleteRow(${JSON.stringify(r.date)})">✕</button></td>
     </tr>`;
   }).join('');
 }
@@ -791,12 +765,6 @@ function saveState() {
     const state = {
       version: STATE_VERSION,
       log,
-      planStart: document.getElementById('plan-start').value,
-      dailyTarget: document.getElementById('daily-target').value,
-      threshold: document.getElementById('threshold').value,
-      daysWeek: document.getElementById('days-week').value,
-      activeRoutes: [...activeRoutes],
-      allRoutes: [...allRoutes],
     };
     localStorage.setItem('sds-ops-tracker', JSON.stringify(state));
   } catch(e) { console.warn('Save failed:', e); }
@@ -808,8 +776,6 @@ function loadState() {
   try {
     // Always seed from hardcoded historical data
     log = SEED_DATA.map(d => ({...d}));
-    allRoutes.add('Heiwajima');
-    activeRoutes.add('Heiwajima');
 
     // Merge localStorage: slack entries always win (allows correcting seed dates);
     // old history entries only fill in non-seed dates.
@@ -822,15 +788,9 @@ function loadState() {
         const logMap = new Map(log.map(r => [r.date, r]));
         state.log.forEach(r => {
           if (r.source === 'slack' || !logMap.has(r.date)) logMap.set(r.date, r);
-          r.routes && r.routes.forEach(rt => { allRoutes.add(rt); activeRoutes.add(rt); });
         });
         log = [...logMap.values()].sort((a,b) => a.date.localeCompare(b.date));
       }
-      if (state.planStart)   document.getElementById('plan-start').value   = state.planStart;
-      if (state.dailyTarget) document.getElementById('daily-target').value = state.dailyTarget;
-      if (state.threshold)   document.getElementById('threshold').value    = state.threshold;
-      if (state.daysWeek)    document.getElementById('days-week').value    = state.daysWeek;
-      if (state.activeRoutes) activeRoutes = new Set(state.activeRoutes);
     }
     return true;
   } catch(e) { console.warn('Load failed:', e); return false; }
@@ -842,9 +802,7 @@ commitSlack = function() { _commitSlack(); saveState(); };
 
 // Auto-load on startup
 loadState();
-renderRouteFilter();
 rerender();
-document.getElementById('status-msg').textContent = `✓ ${log.length} days loaded`;
 </script>
 </body>
 </html>
