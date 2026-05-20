@@ -83,47 +83,23 @@
     <div class="row"><label>Daily target (hrs)&nbsp;</label><input type="number" id="daily-target" value="10" min="1" max="24" style="width:70px" onchange="rerender()"></div>
     <div class="row"><label>75% milestone (hrs)&nbsp;</label><input type="number" id="threshold" value="200" min="1" style="width:80px" onchange="rerender()"></div>
     <div class="row"><label>Days/week&nbsp;</label><input type="number" id="days-week" value="5" min="1" max="7" style="width:60px" onchange="rerender()"></div>
-    <div class="row"><label>Planned start date&nbsp;</label><input type="date" id="plan-start" value="2025-05-12" onchange="rerender()" style="width:140px"></div>
+    <div class="row"><label>Planned start date&nbsp;</label><input type="date" id="plan-start" value="2026-05-12" onchange="rerender()" style="width:140px"></div>
     <span id="status-msg">No data loaded</span>
   </div>
 </section>
 
-<!-- INPUT TABS -->
+<!-- SLACK INPUT -->
 <section>
-  <div class="tabs">
-    <div class="tab active" onclick="switchTab('slack')">Slack Thread</div>
-    <div class="tab" onclick="switchTab('history')">Historical Backfill (TSV)</div>
+  <div class="row" style="margin-bottom:8px">
+    <label>Paste xxx連絡事項 thread — one day at a time</label>
   </div>
-
-  <!-- SLACK TAB -->
-  <div class="tab-panel active" id="tab-slack">
-    <div class="row" style="margin-bottom:8px">
-      <label>Paste xxx連絡事項 thread — one day at a time</label>
-    </div>
-    <textarea id="slack-paste" placeholder="Paste the full thread. Date line + 開始/終了 messages.&#10;&#10;Example:&#10;2025/05/20&#10;15:29 Heiwajima urban route (ロータリーなし)1周目終了 渋滞:無し&#10;15:30 Heiwajima urban route (ロータリーなし) 2周目開始&#10;16:45 Heiwajima urban route 2周目終了 ODO: 72533&#10;Lunch 1:00"></textarea>
-    <div class="row" style="margin-top:8px;gap:8px">
-      <button onclick="parseSlack()">Parse</button>
-      <button class="sec" onclick="commitSlack()">Add to Log ↓</button>
-      <button class="sec" onclick="document.getElementById('slack-paste').value='';document.getElementById('slack-preview').innerHTML=''">Clear</button>
-    </div>
-    <div id="slack-preview"></div>
+  <textarea id="slack-paste" placeholder="Paste the full thread. Date line + 開始/終了 messages.&#10;&#10;Example:&#10;2025/05/20&#10;15:29 Heiwajima urban route (ロータリーなし)1周目終了 渋滞:無し&#10;15:30 Heiwajima urban route (ロータリーなし) 2周目開始&#10;16:45 Heiwajima urban route 2周目終了 ODO: 72533&#10;Lunch 1:00"></textarea>
+  <div class="row" style="margin-top:8px;gap:8px">
+    <button onclick="parseSlack()">Parse</button>
+    <button class="sec" onclick="commitSlack()">Add to Log ↓</button>
+    <button class="sec" onclick="document.getElementById('slack-paste').value='';document.getElementById('slack-preview').innerHTML=''">Clear</button>
   </div>
-
-  <!-- HISTORY TAB -->
-  <div class="tab-panel" id="tab-history">
-    <div class="info-box" style="margin-bottom:10px">
-      <h3>One-time historical import</h3>
-      Paste your existing TSV/spreadsheet data. Expected columns (tab-separated):<br>
-      <code>Date · Start ODO · End ODO · km · Op Start · Op End · gate-to-gate · Lunch break · Total hours</code><br>
-      Times can be <code>11:17 AM</code>, <code>3:32 PM</code>, or <code>15:30</code> — all displayed in 24h. Lunch is auto-calculated (1h if G2G &gt; 4h). Header row is auto-skipped.
-    </div>
-    <textarea id="history-paste" placeholder="Date	Start ODO	End ODO	km	Op Start	Op End	gate-to-gate	Lunch brake	Total hours&#10;4/22	71467	71514	47	11:17 AM	3:32 PM	4:15	1:00	3:15&#10;..."></textarea>
-    <div class="row" style="margin-top:8px;gap:8px">
-      <button onclick="importHistory()">Import All Rows</button>
-      <button class="sec" onclick="document.getElementById('history-paste').value=''">Clear</button>
-    </div>
-    <div id="history-status" style="font-size:12px;color:var(--muted);margin-top:8px"></div>
-  </div>
+  <div id="slack-preview"></div>
 </section>
 
 <!-- ROUTE FILTER -->
@@ -148,17 +124,23 @@
   <div class="legend">
     <div class="legend-item"><div class="ld" style="background:#38bdf8"></div>Actual Accum.</div>
     <div class="legend-item"><div class="ld" style="background:#0ea5e9;opacity:.6"></div>Actual × 75%</div>
-    <div class="legend-item"><div class="ld" style="background:#4ade80"></div>Planned Accum.</div>
-    <div class="legend-item"><div class="ld" style="background:#86efac;opacity:.6"></div>Planned × 75%</div>
+    <div class="legend-item"><div class="ld" style="background:#4b5563"></div>Planned Accum.</div>
+    <div class="legend-item"><div class="ld" style="background:#374151;opacity:.8"></div>Planned × 75%</div>
   </div>
 </section>
 
-<!-- TABLE -->
-<section class="table-wrap">
+<!-- VIEW TABS -->
+<div class="tabs" id="view-tabs" style="margin-top:4px;margin-bottom:0">
+  <div class="tab active" data-view="log"  onclick="switchView('log')">Daily Log</div>
+  <div class="tab"        data-view="laps" onclick="switchView('laps')">Laps</div>
+</div>
+
+<!-- DAILY LOG TABLE -->
+<section class="table-wrap" id="view-log">
   <table>
     <thead>
       <tr>
-        <th>Date</th><th>Source</th><th>Route(s)</th>
+        <th>Date</th>
         <th>Op Start</th><th>Op End</th>
         <th class="r">G2G</th><th class="r">Lunch</th><th class="r">Total hrs</th>
         <th class="r">Plan hrs</th><th class="r">Plan Accum.</th>
@@ -166,12 +148,232 @@
       </tr>
     </thead>
     <tbody id="table-body">
-      <tr><td colspan="13" style="text-align:center;color:#475569;padding:24px">No data — paste historical TSV or a Slack thread above</td></tr>
+      <tr><td colspan="11" style="text-align:center;color:#475569;padding:24px">No data</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- LAP DETAIL TABLE -->
+<section class="table-wrap" id="view-laps" style="display:none">
+  <table>
+    <thead>
+      <tr>
+        <th>Date</th><th>Day</th><th>Route</th><th>Start</th><th class="r">Lap Time</th>
+      </tr>
+    </thead>
+    <tbody id="lap-table-body">
+      <tr><td colspan="5" style="text-align:center;color:#475569;padding:24px">No lap data — paste Slack threads to populate</td></tr>
     </tbody>
   </table>
 </section>
 
 <script>
+// ── SEED DATA (historical, fixed) ─────────────────────────────────────────
+const SEED_DATA = [
+  {date:'2026-04-22',routes:['Heiwajima'],source:'history',opStart:'11:17',opEnd:'15:32',g2gMins:255, lunchMins:60, totalHrs:3.25, startOdo:71467,endOdo:71514,km:47,  planHrs:0,
+   laps:[
+     {route:'Heiwajima urban',         lap:1, startTime:'11:17',startMins:677,  lapMins:28},
+     {route:'Heiwajima urban',         lap:2, startTime:'11:47',startMins:707,  lapMins:31},
+     {route:'高速ルート',               lap:1, startTime:'13:32',startMins:812,  lapMins:48},
+     {route:'昭和島ループ',             lap:1, startTime:'14:22',startMins:862,  lapMins:28},
+     {route:'高速ルート',               lap:2, startTime:'14:50',startMins:890,  lapMins:31},
+   ]},
+  {date:'2026-04-23',routes:['Heiwajima'],source:'history',opStart:'10:11',opEnd:'11:45',g2gMins:94,  lunchMins:0,  totalHrs:1.57, startOdo:71514,endOdo:71545,km:31,  planHrs:0,
+   laps:[
+     {route:'昭和島ループ',             lap:1, startTime:'10:11',startMins:611,  lapMins:27},
+     {route:'平和島ループ',             lap:1, startTime:'10:41',startMins:641,  lapMins:24},
+     {route:'高速道路込みループ',       lap:1, startTime:'11:08',startMins:668,  lapMins:37},
+   ]},
+  {date:'2026-04-24',routes:['Heiwajima'],source:'history',opStart:'09:50',opEnd:'17:40',g2gMins:470, lunchMins:60, totalHrs:6.83, startOdo:71545,endOdo:71630,km:85,  planHrs:0,
+   laps:[
+     {route:'urban merge',             lap:1, startTime:'10:00',startMins:600,  lapMins:26},
+     {route:'urban no-merge',          lap:1, startTime:'10:30',startMins:630,  lapMins:29},
+     {route:'urban merge',             lap:2, startTime:'11:00',startMins:660,  lapMins:32},
+     {route:'urban no-merge',          lap:2, startTime:'13:13',startMins:793,  lapMins:29},
+     {route:'urban merge',             lap:3, startTime:'13:47',startMins:827,  lapMins:28},
+     {route:'urban no-merge',          lap:3, startTime:'14:30',startMins:870,  lapMins:28},
+     {route:'urban merge',             lap:4, startTime:'15:12',startMins:912,  lapMins:30},
+     {route:'urban no-merge',          lap:4, startTime:'15:44',startMins:944,  lapMins:29},
+     {route:'urban merge',             lap:5, startTime:'16:16',startMins:976,  lapMins:19},
+     {route:'urban no-merge',          lap:5, startTime:'16:38',startMins:998,  lapMins:28},
+   ]},
+  {date:'2026-04-27',routes:['Heiwajima'],source:'history',opStart:'09:51',opEnd:'17:28',g2gMins:457, lunchMins:60, totalHrs:6.62, startOdo:71630,endOdo:71714,km:84,  planHrs:0,
+   laps:[
+     {route:'urban merge',             lap:1, startTime:'10:00',startMins:600,  lapMins:26},
+     {route:'urban no-merge',          lap:1, startTime:'10:28',startMins:628,  lapMins:26},
+     {route:'urban merge',             lap:2, startTime:'10:56',startMins:656,  lapMins:24},
+     {route:'urban no-merge',          lap:2, startTime:'11:22',startMins:682,  lapMins:25},
+     {route:'Otemachi route',          lap:1, startTime:'14:11',startMins:851,  lapMins:23},
+     {route:'Otemachi route',          lap:2, startTime:'14:36',startMins:876,  lapMins:24},
+     {route:'Otemachi route',          lap:3, startTime:'15:03',startMins:903,  lapMins:18},
+     {route:'Otemachi route',          lap:4, startTime:'15:25',startMins:925,  lapMins:24},
+     {route:'Otemachi route',          lap:5, startTime:'15:51',startMins:951,  lapMins:21},
+     {route:'Otemachi route',          lap:6, startTime:'16:27',startMins:987,  lapMins:22},
+   ]},
+  {date:'2026-04-28',routes:['Heiwajima'],source:'history',opStart:'09:34',opEnd:'17:42',g2gMins:488, lunchMins:60, totalHrs:7.13, startOdo:71714,endOdo:71801,km:87,  planHrs:0,
+   laps:[
+     {route:'urban merge',             lap:1, startTime:'09:53',startMins:593,  lapMins:27},
+     {route:'urban no-merge',          lap:1, startTime:'10:25',startMins:625,  lapMins:27},
+     {route:'urban merge',             lap:2, startTime:'11:03',startMins:663,  lapMins:27},
+     {route:'urban no-merge',          lap:2, startTime:'11:34',startMins:694,  lapMins:29},
+     {route:'Otemachi route',          lap:1, startTime:'14:15',startMins:855,  lapMins:23},
+     {route:'Otemachi route',          lap:2, startTime:'14:40',startMins:880,  lapMins:26},
+     {route:'Otemachi route',          lap:3, startTime:'15:10',startMins:910,  lapMins:20},
+     {route:'Otemachi route',          lap:4, startTime:'15:35',startMins:935,  lapMins:23},
+     {route:'Otemachi route',          lap:5, startTime:'15:59',startMins:959,  lapMins:22},
+     {route:'Otemachi route',          lap:6, startTime:'16:23',startMins:983,  lapMins:22},
+   ]},
+  {date:'2026-04-29',routes:['Heiwajima'],source:'history',opStart:'11:00',opEnd:'17:52',g2gMins:412, lunchMins:60, totalHrs:5.87, startOdo:71801,endOdo:71865,km:64,  planHrs:0,
+   laps:[
+     {route:'Otemachi route',          lap:1, startTime:'11:48',startMins:708,  lapMins:17},
+     {route:'Otemachi route',          lap:2, startTime:'12:08',startMins:728,  lapMins:17},
+     {route:'urban merge',             lap:1, startTime:'14:08',startMins:848,  lapMins:20},
+     {route:'urban no-merge',          lap:1, startTime:'16:50',startMins:1010, lapMins:22},
+     {route:'フリー走行',               lap:1, startTime:'17:15',startMins:1035, lapMins:27},
+   ]},
+  {date:'2026-04-30',routes:['Heiwajima'],source:'history',opStart:'10:57',opEnd:'17:55',g2gMins:418, lunchMins:60, totalHrs:5.97, startOdo:71865,endOdo:71951,km:86,  planHrs:0,
+   laps:[
+     {route:'urban merge',             lap:2, startTime:'10:58',startMins:658,  lapMins:27},
+     {route:'urban merge',             lap:3, startTime:'11:26',startMins:686,  lapMins:28},
+     {route:'Otemachi route',          lap:1, startTime:'14:15',startMins:855,  lapMins:25},
+     {route:'Otemachi route',          lap:2, startTime:'14:42',startMins:882,  lapMins:23},
+     {route:'Otemachi route',          lap:3, startTime:'15:06',startMins:906,  lapMins:23},
+     {route:'Otemachi route',          lap:4, startTime:'15:30',startMins:930,  lapMins:24},
+     {route:'urban no-merge',          lap:1, startTime:'16:55',startMins:1015, lapMins:37},
+   ]},
+  {date:'2026-05-01',routes:['Heiwajima'],source:'history',opStart:'13:40',opEnd:'17:30',g2gMins:230, lunchMins:0,  totalHrs:3.83, startOdo:71960,endOdo:72013,km:53,  planHrs:0,
+   laps:[
+     {route:'Heiwajima urban route',   lap:1, startTime:'13:51',startMins:831,  lapMins:22},
+     {route:'Heiwajima urban route',   lap:2, startTime:'14:13',startMins:853,  lapMins:22},
+     {route:'Heiwajima urban route',   lap:3, startTime:'14:35',startMins:875,  lapMins:20},
+     {route:'Heiwajima urban route',   lap:4, startTime:'14:55',startMins:895,  lapMins:20},
+     {route:'フリー走行',               lap:1, startTime:'16:30',startMins:990,  lapMins:52},
+   ]},
+  {date:'2026-05-06',routes:['Heiwajima'],source:'history',opStart:'09:52',opEnd:'17:37',g2gMins:465, lunchMins:60, totalHrs:6.75, startOdo:72013,endOdo:72114,km:101, planHrs:0,
+   laps:[
+     {route:'Otemachi route',                    lap:1, startTime:'10:50',startMins:650,  lapMins:20},
+     {route:'Otemachi route',                    lap:2, startTime:'11:12',startMins:672,  lapMins:20},
+     {route:'Heiwajima urban route',             lap:1, startTime:'13:35',startMins:815,  lapMins:19},
+     {route:'Heiwajima urban route',             lap:2, startTime:'13:55',startMins:835,  lapMins:21},
+     {route:'Heiwajima urban route',             lap:3, startTime:'14:18',startMins:858,  lapMins:22},
+     {route:'Heiwajima urban route',             lap:4, startTime:'14:42',startMins:882,  lapMins:24},
+     {route:'Heiwajima urban route (no-merge)',  lap:1, startTime:'15:10',startMins:910,  lapMins:24},
+     {route:'Heiwajima urban route (no-merge)',  lap:2, startTime:'15:36',startMins:936,  lapMins:28},
+     {route:'Heiwajima urban route (no-merge)',  lap:3, startTime:'16:05',startMins:965,  lapMins:25},
+     {route:'Heiwajima urban route (no-merge)',  lap:4, startTime:'16:35',startMins:995,  lapMins:28},
+   ]},
+  {date:'2026-05-07',routes:['Heiwajima'],source:'history',opStart:'16:04',opEnd:'17:19',g2gMins:75,  lunchMins:0,  totalHrs:1.25, startOdo:72116,endOdo:72147,km:31,  planHrs:0},
+  {date:'2026-05-12',routes:['Heiwajima'],source:'history',opStart:'14:00',opEnd:'16:14',g2gMins:134, lunchMins:0,  totalHrs:2.23, startOdo:72156,endOdo:72191,km:35,  planHrs:5,
+   laps:[
+     {route:'Heiwajima urban route',lap:1, startTime:'14:00',startMins:840, lapMins:23},
+     {route:'Heiwajima urban route',lap:2, startTime:'14:29',startMins:869, lapMins:26},
+     {route:'Heiwajima urban route',lap:3, startTime:'15:00',startMins:900, lapMins:22},
+     {route:'Heiwajima urban route',lap:4, startTime:'15:25',startMins:925, lapMins:16},
+     {route:'Heiwajima urban route',lap:5, startTime:'15:45',startMins:945, lapMins:22},
+   ]},
+  {date:'2026-05-13',routes:['Heiwajima'],source:'history',opStart:'10:07',opEnd:'17:03',g2gMins:416, lunchMins:60, totalHrs:5.93, startOdo:72191,endOdo:72266,km:75,  planHrs:5,
+   laps:[
+     {route:'Heiwajima urban route (ロータリーなし)',lap:1,  startTime:'10:07',startMins:607, lapMins:20},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:2,  startTime:'10:41',startMins:641, lapMins:21},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:3,  startTime:'11:12',startMins:672, lapMins:25},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:4,  startTime:'11:41',startMins:701, lapMins:24},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:5,  startTime:'13:40',startMins:820, lapMins:26},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:6,  startTime:'14:15',startMins:855, lapMins:24},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:7,  startTime:'14:41',startMins:881, lapMins:21},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:8,  startTime:'15:30',startMins:930, lapMins:21},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:9,  startTime:'15:53',startMins:953, lapMins:19},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:10, startTime:'16:17',startMins:977, lapMins:18},
+   ]},
+  {date:'2026-05-14',routes:['Heiwajima'],source:'history',opStart:'09:41',opEnd:'17:25',g2gMins:464, lunchMins:60, totalHrs:6.73, startOdo:72266,endOdo:72343,km:77,  planHrs:5,
+   laps:[
+     {route:'Heiwajima urban route (ロータリーなし)',lap:1,  startTime:'09:51',startMins:591, lapMins:27},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:2,  startTime:'10:23',startMins:623, lapMins:26},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:3,  startTime:'10:59',startMins:659, lapMins:21},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:4,  startTime:'11:25',startMins:685, lapMins:23},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:5,  startTime:'13:32',startMins:812, lapMins:28},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:6,  startTime:'14:05',startMins:845, lapMins:30},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:7,  startTime:'14:36',startMins:876, lapMins:22},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:8,  startTime:'15:30',startMins:930, lapMins:32},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:9,  startTime:'16:20',startMins:980, lapMins:null},
+   ]},
+  {date:'2026-05-15',routes:['Heiwajima'],source:'history',opStart:'09:52',opEnd:'17:00',g2gMins:428, lunchMins:60, totalHrs:6.13, startOdo:72343,endOdo:72402,km:59,  planHrs:5,
+   laps:[
+     {route:'Heiwajima urban route (ロータリーなし)',lap:1,  startTime:'09:52',startMins:592, lapMins:33},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:2,  startTime:'10:37',startMins:637, lapMins:29},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:3,  startTime:'11:15',startMins:675, lapMins:25},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:4,  startTime:'14:39',startMins:879, lapMins:22},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:5,  startTime:'15:10',startMins:910, lapMins:25},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:6,  startTime:'15:39',startMins:939, lapMins:24},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:7,  startTime:'16:10',startMins:970, lapMins:26},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:8,  startTime:'16:38',startMins:998, lapMins:22},
+   ]},
+  {date:'2026-05-18',routes:['Heiwajima'],source:'history',opStart:'07:39',opEnd:'19:39',g2gMins:720, lunchMins:120,totalHrs:10.00,startOdo:72402,endOdo:72533,km:130, planHrs:10,
+   laps:[
+     {route:'Heiwajima urban route (ロータリーなし)',lap:1,  startTime:'07:39',startMins:459,  lapMins:26},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:2,  startTime:'08:14',startMins:494,  lapMins:26},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:3,  startTime:'08:47',startMins:527,  lapMins:30},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:4,  startTime:'09:22',startMins:562,  lapMins:26},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:5,  startTime:'10:04',startMins:604,  lapMins:24},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:6,  startTime:'10:32',startMins:632,  lapMins:25},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:7,  startTime:'12:25',startMins:745,  lapMins:25},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:8,  startTime:'12:53',startMins:773,  lapMins:19},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:9,  startTime:'13:18',startMins:798,  lapMins:22},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:10, startTime:'13:42',startMins:822,  lapMins:25},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:11, startTime:'14:52',startMins:892,  lapMins:25},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:12, startTime:'15:20',startMins:920,  lapMins:22},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:13, startTime:'15:45',startMins:945,  lapMins:24},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:14, startTime:'16:13',startMins:973,  lapMins:24},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:15, startTime:'16:40',startMins:1000, lapMins:32},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:16, startTime:'17:27',startMins:1047, lapMins:30},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:17, startTime:'18:00',startMins:1080, lapMins:33},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:18, startTime:'18:35',startMins:1115, lapMins:27},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:19, startTime:'19:05',startMins:1145, lapMins:22},
+   ]},
+  {date:'2026-05-19',routes:['Heiwajima'],source:'history',opStart:'07:24',opEnd:'19:35',g2gMins:731, lunchMins:180,totalHrs:9.18, startOdo:72533,endOdo:72654,km:121, planHrs:10,
+   laps:[
+     {route:'Heiwajima urban route (ロータリーなし)',lap:1,  startTime:'07:31',startMins:451,  lapMins:26},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:2,  startTime:'08:02',startMins:482,  lapMins:24},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:3,  startTime:'08:30',startMins:510,  lapMins:33},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:4,  startTime:'09:06',startMins:546,  lapMins:27},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:5,  startTime:'09:41',startMins:581,  lapMins:48},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:6,  startTime:'10:33',startMins:633,  lapMins:23},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:7,  startTime:'13:39',startMins:819,  lapMins:26},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:8,  startTime:'14:55',startMins:895,  lapMins:22},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:9,  startTime:'15:24',startMins:924,  lapMins:19},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:10, startTime:'15:45',startMins:945,  lapMins:19},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:11, startTime:'16:11',startMins:971,  lapMins:23},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:12, startTime:'16:37',startMins:997,  lapMins:25},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:13, startTime:'17:05',startMins:1025, lapMins:22},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:14, startTime:'17:30',startMins:1050, lapMins:19},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:15, startTime:'17:52',startMins:1072, lapMins:21},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:16, startTime:'18:19',startMins:1099, lapMins:29},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:17, startTime:'18:50',startMins:1130, lapMins:22},
+   ]},
+  {date:'2026-05-20',routes:['Heiwajima'],source:'history',opStart:'07:20',opEnd:'19:50',g2gMins:750, lunchMins:150,totalHrs:10.00,startOdo:72654,endOdo:72794,km:140, planHrs:10,
+   laps:[
+     {route:'Heiwajima urban route (ロータリーなし)',lap:1,  startTime:'07:30',startMins:450,  lapMins:24},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:2,  startTime:'07:58',startMins:478,  lapMins:23},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:3,  startTime:'08:32',startMins:512,  lapMins:25},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:4,  startTime:'09:00',startMins:540,  lapMins:25},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:5,  startTime:'09:27',startMins:567,  lapMins:31},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:6,  startTime:'10:01',startMins:601,  lapMins:32},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:7,  startTime:'10:40',startMins:640,  lapMins:27},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:8,  startTime:'12:56',startMins:776,  lapMins:24},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:9,  startTime:'13:25',startMins:805,  lapMins:27},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:10, startTime:'13:56',startMins:836,  lapMins:25},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:11, startTime:'15:08',startMins:908,  lapMins:21},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:12, startTime:'15:30',startMins:930,  lapMins:25},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:13, startTime:'15:57',startMins:957,  lapMins:22},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:14, startTime:'16:21',startMins:981,  lapMins:22},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:15, startTime:'16:45',startMins:1005, lapMins:21},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:16, startTime:'17:10',startMins:1030, lapMins:23},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:17, startTime:'17:53',startMins:1073, lapMins:23},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:18, startTime:'18:20',startMins:1100, lapMins:23},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:19, startTime:'18:45',startMins:1125, lapMins:23},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:20, startTime:'19:10',startMins:1150, lapMins:18},
+   ]},
+];
+
 // ── STATE ──────────────────────────────────────────────────────────────────
 let log = [];
 let activeRoutes = new Set();
@@ -184,7 +386,8 @@ const toNum = v => parseFloat(String(v||0).replace(/,/g,''))||0;
 const fmtH  = h => (h===null||h===undefined||isNaN(h)) ? '—' : h.toFixed(1)+'h';
 const minToHHMM = m => { if(m===null||m===undefined)return '—'; const h=Math.floor(Math.abs(m)/60),mn=Math.abs(m)%60; return `${String(h).padStart(2,'0')}:${String(mn).padStart(2,'0')}`; };
 const minToHrs  = m => m===null ? null : +(m/60).toFixed(2);
-const isHW = s => /heiwajima|平和島/i.test(s||'');
+const isHW        = s => /heiwajima|平和島/i.test(s||'');
+const isMergeRoute = s => isHW(s) && !/no.?merge/i.test(s||'');
 
 // Parse time string → minutes since midnight. Handles "11:17 AM", "3:32 PM", "15:30", "15:29"
 function parseTime(s) {
@@ -236,67 +439,37 @@ function normaliseDate(s) {
   // YYYY/MM/DD or YYYY-MM-DD
   let m = s.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
   if (m) return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
-  // M/D or MM/DD (assume current year, or 2025 for historical)
+  // M/D or MM/DD (assume current year, or 2026 for historical)
   m = s.match(/^(\d{1,2})\/(\d{1,2})$/);
-  if (m) return `2025-${m[1].padStart(2,'0')}-${m[2].padStart(2,'0')}`;
+  if (m) return `2026-${m[1].padStart(2,'0')}-${m[2].padStart(2,'0')}`;
   // Japanese 5月20日
   m = s.match(/(\d{1,2})月(\d{1,2})日/);
   if (m) return `${new Date().getFullYear()}-${m[1].padStart(2,'0')}-${m[2].padStart(2,'0')}`;
   return null;
 }
 
-// ── TABS ──────────────────────────────────────────────────────────────────
-function switchTab(name) {
-  document.querySelectorAll('.tab').forEach((t,i) => {
-    const names = ['slack','history'];
-    t.classList.toggle('active', names[i]===name);
+// ── LAP PAIRING ───────────────────────────────────────────────────────────
+function pairLaps(events) {
+  // Group events by route name
+  const byRoute = {};
+  events.forEach(e => {
+    if (!byRoute[e.route]) byRoute[e.route] = { starts:[], ends:[] };
+    if (e.type === '開始') byRoute[e.route].starts.push(e);
+    else                   byRoute[e.route].ends.push(e);
   });
-  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-  document.getElementById('tab-'+name).classList.add('active');
-}
-
-// ── HISTORICAL TSV IMPORT ─────────────────────────────────────────────────
-function importHistory() {
-  const raw = document.getElementById('history-paste').value.trim();
-  if (!raw) return;
-  const lines = raw.split('\n').filter(l => l.trim());
-  let imported = 0, skipped = 0;
-
-  lines.forEach(line => {
-    const cols = line.split('\t').map(c => c.trim());
-    // Skip header
-    if (/^date$/i.test(cols[0])) return;
-    const date = normaliseDate(cols[0]);
-    if (!date) { skipped++; return; }
-
-    const startOdo  = toNum(cols[1]);
-    const endOdo    = toNum(cols[2]);
-    const km        = toNum(cols[3]);
-    const opStartMins = parseTime(cols[4]);
-    const opEndMins   = parseTime(cols[5]);
-    const opStart     = minsToTime24(opStartMins);
-    const opEnd       = minsToTime24(opEndMins);
-    const g2gMins     = parseDuration(cols[6]) || (opStartMins!=null && opEndMins!=null ? opEndMins - opStartMins : 0);
-    const lunchMins   = autoLunch(g2gMins);
-    const totalHrs    = toNum(cols[8]) || minToHrs(g2gMins - lunchMins);
-
-    // Remove existing entry for same date
-    log = log.filter(r => r.date !== date);
-
-    log.push({
-      date, routes: ['Heiwajima'], source: 'history',
-      opStart, opEnd, g2gMins, lunchMins, totalHrs,
-      planHrs: toNum(document.getElementById('daily-target').value),
-      startOdo, endOdo, km,
+  const laps = [];
+  Object.entries(byRoute).forEach(([route, {starts, ends}]) => {
+    starts.sort((a,b) => a.mins - b.mins);
+    ends.sort((a,b) => a.mins - b.mins);
+    starts.forEach((s, i) => {
+      // Match by lap number when present, otherwise pair by index
+      let end = (s.lap !== null) ? ends.find(e => e.lap === s.lap) : null;
+      if (!end) end = ends[i] || null;
+      laps.push({ route, lap: s.lap, startTime: minsToTime24(s.mins),
+                  startMins: s.mins, lapMins: end ? end.mins - s.mins : null });
     });
-    imported++;
   });
-
-  log.sort((a,b) => a.date.localeCompare(b.date));
-  allRoutes.add('Heiwajima'); activeRoutes.add('Heiwajima');
-  renderRouteFilter(); rerender();
-  document.getElementById('history-status').textContent =
-    `✓ Imported ${imported} rows${skipped ? ` (${skipped} skipped)` : ''}. Total in log: ${log.length}`;
+  return laps.sort((a,b) => a.startMins - b.startMins);
 }
 
 // ── SLACK PARSER ──────────────────────────────────────────────────────────
@@ -331,18 +504,19 @@ function parseSlack() {
   }
 
   const hwEvents    = events.filter(e => isHW(e.route));
+  const mergeEvents = hwEvents.filter(e => isMergeRoute(e.route));
+  const hwExcluded  = hwEvents.filter(e => !isMergeRoute(e.route));
   const otherEvents = events.filter(e => !isHW(e.route));
 
-  // First 開始, last 終了 of HW events
-  const starts = hwEvents.filter(e => e.type==='開始').sort((a,b)=>a.mins-b.mins);
-  const ends   = hwEvents.filter(e => e.type==='終了').sort((a,b)=>a.mins-b.mins);
+  // First 開始, last 終了 of merge-only events
+  const starts = mergeEvents.filter(e => e.type==='開始').sort((a,b)=>a.mins-b.mins);
+  const ends   = mergeEvents.filter(e => e.type==='終了').sort((a,b)=>a.mins-b.mins);
   const first  = starts[0]  || null;
   const last   = ends[ends.length-1] || null;
 
   let g2gMins = null;
   if (first && last && last.mins > first.mins) g2gMins = last.mins - first.mins;
 
-  // Auto lunch: 60 min if G2G > 4h, else 0
   const lunchMins = autoLunch(g2gMins);
   const totalHrs  = g2gMins !== null ? minToHrs(g2gMins - lunchMins) : null;
 
@@ -352,7 +526,12 @@ function parseSlack() {
   if (odoMatches.length >= 2) { startOdo=parseInt(odoMatches[0][1]); endOdo=parseInt(odoMatches[odoMatches.length-1][1]); }
   else if (odoMatches.length === 1) endOdo = parseInt(odoMatches[0][1]);
 
-  const routesSeen = [...new Set(hwEvents.map(e=>e.route).filter(Boolean))];
+  const routesSeen  = [...new Set(mergeEvents.map(e=>e.route).filter(Boolean))];
+  const excludedRoutes = [
+    ...new Set(otherEvents.map(e=>e.route).filter(Boolean)),
+    ...new Set(hwExcluded.map(e=>e.route).filter(Boolean)),
+  ];
+  const laps = pairLaps(mergeEvents);
 
   pendingSlack = {
     date, routes: routesSeen, source: 'slack',
@@ -362,12 +541,13 @@ function parseSlack() {
     startOdo, endOdo,
     km: startOdo&&endOdo ? endOdo-startOdo : null,
     planHrs: toNum(document.getElementById('daily-target').value),
-    otherRoutes: [...new Set(otherEvents.map(e=>e.route).filter(Boolean))],
+    otherRoutes: excludedRoutes,
+    laps,
   };
 
   const preview = document.getElementById('slack-preview');
-  if (!hwEvents.length) {
-    preview.innerHTML = `<div class="preview-box" style="color:var(--red)">⚠ No Heiwajima 開始/終了 events found.<br>Make sure the thread contains those keywords.</div>`;
+  if (!mergeEvents.length) {
+    preview.innerHTML = `<div class="preview-box" style="color:var(--red)">⚠ No Heiwajima merge 開始/終了 events found.<br>Make sure the thread contains those keywords.</div>`;
     return;
   }
 
@@ -380,7 +560,7 @@ function parseSlack() {
     `<b>Lunch:</b> ${lunchMins?fmtDur(lunchMins)+' (auto)':'0 (G2G ≤ 4h)'}`,
     `<b>Total hours:</b> ${fmtH(totalHrs)}`,
     `<b>ODO:</b> ${startOdo||'?'} → ${endOdo||'?'}${startOdo&&endOdo?' ('+((endOdo-startOdo))+'km)':''}`,
-    otherEvents.length ? `<b>Non-HW routes (excluded):</b> ${[...new Set(otherEvents.map(e=>e.route))].join(', ')}` : '',
+    excludedRoutes.length ? `<b>Excluded routes:</b> ${excludedRoutes.join(', ')}` : '',
   ].filter(Boolean);
 
   preview.innerHTML = `<div class="preview-box">${rows.join('<br>')}</div>`;
@@ -430,7 +610,7 @@ function getFiltered() {
 function rerender() {
   const data = getFiltered();
   if (!data.length) return;
-  const planStart = document.getElementById('plan-start').value || '2025-05-12';
+  const planStart = document.getElementById('plan-start').value || '2026-05-12';
 
   // First pass: compute actual accumulation for all rows
   let aAccum = 0;
@@ -446,11 +626,11 @@ function rerender() {
 
   // Stepped daily rate:
   //   planStart itself  → 0 (anchor day, no addition)
-  //   2025-05-13 to 2025-05-15 → +5h/day
-  //   2025-05-18 onwards        → +10h/day (use configured daily target)
-  const RAMP_START = '2025-05-13';
-  const RAMP_END   = '2025-05-15';
-  const FULL_START = '2025-05-18';
+  //   2026-05-13 to 2026-05-15 → +5h/day
+  //   2026-05-18 onwards        → +10h/day (use configured daily target)
+  const RAMP_START = '2026-05-13';
+  const RAMP_END   = '2026-05-15';
+  const FULL_START = '2026-05-18';
 
   let pExtra = 0;
   const rows = withActual.map(d => {
@@ -464,9 +644,29 @@ function rerender() {
     return { ...d, pAccum };
   });
 
+  // Project future days until planned×75% >= threshold
+  const threshold  = toNum(document.getElementById('threshold').value) || 200;
+  const lastRow    = rows[rows.length - 1];
+  const projRows   = [];
+  if (lastRow && lastRow.pAccum !== null && lastRow.pAccum * 0.75 < threshold) {
+    let curDate   = lastRow.date;
+    let curPAccum = lastRow.pAccum;
+    let safety    = 0;
+    while (curPAccum * 0.75 < threshold && safety++ < 500) {
+      const d = new Date(curDate + 'T00:00:00');
+      d.setDate(d.getDate() + 1);
+      curDate   = d.toISOString().slice(0, 10);
+      curPAccum = +(curPAccum + (toNum(document.getElementById('daily-target').value) || 10)).toFixed(2);
+      projRows.push({ date: curDate, pAccum: curPAccum, aAccum: null, totalHrs: null,
+        routes: [], source: 'projected', opStart: null, opEnd: null,
+        g2gMins: null, lunchMins: null, planHrs: null });
+    }
+  }
+
   renderStats(rows);
-  renderChart(rows);
+  renderChart([...rows, ...projRows]);
   renderTable(rows);
+  renderLapTable(rows);
 }
 
 function renderStats(rows) {
@@ -486,8 +686,8 @@ function renderStats(rows) {
 
 function renderChart(rows) {
   const labels = rows.map(r => r.date.slice(5));
-  const aA  = rows.map(r => r.aAccum);
-  const a75 = rows.map(r => +(r.aAccum*.75).toFixed(2));
+  const aA  = rows.map(r => r.aAccum !== null ? r.aAccum : null);
+  const a75 = rows.map(r => r.aAccum !== null ? +(r.aAccum*.75).toFixed(2) : null);
   const pA  = rows.map(r => r.pAccum !== null ? r.pAccum : null);
   const p75 = rows.map(r => r.pAccum !== null ? +(r.pAccum*.75).toFixed(2) : null);
   const ctx = document.getElementById('main-chart').getContext('2d');
@@ -499,8 +699,8 @@ function renderChart(rows) {
       datasets:[
         {label:'Actual Accum.',data:aA,  borderColor:'#38bdf8',borderWidth:2.5,pointRadius:3,backgroundColor:'rgba(56,189,248,.07)',fill:false,tension:.2},
         {label:'Actual × 75%',data:a75, borderColor:'#0ea5e9',borderWidth:1.5,borderDash:[5,4],pointRadius:2,fill:false,tension:.2},
-        {label:'Planned Accum.',data:pA, borderColor:'#4ade80',borderWidth:2.5,pointRadius:3,backgroundColor:'rgba(74,222,128,.06)',fill:false,tension:.2},
-        {label:'Planned × 75%',data:p75,borderColor:'#86efac',borderWidth:1.5,borderDash:[5,4],pointRadius:2,fill:false,tension:.2},
+        {label:'Planned Accum.',data:pA, borderColor:'#4b5563',borderWidth:1.5,pointRadius:2,backgroundColor:'rgba(75,85,99,.05)',fill:false,tension:.2},
+        {label:'Planned × 75%',data:p75,borderColor:'#374151',borderWidth:1,  borderDash:[5,4],pointRadius:0,fill:false,tension:.2},
       ]
     },
     options:{
@@ -526,16 +726,8 @@ function renderChart(rows) {
 function renderTable(rows) {
   document.getElementById('table-body').innerHTML = rows.map((r,i) => {
     const delta = r.pAccum !== null ? r.aAccum - r.pAccum : null;
-    const src   = r.source==='history'
-      ? '<span class="chip chip-hist">hist</span>'
-      : '<span class="chip chip-hw">slack</span>';
-    const routeStr = r.routes.length
-      ? r.routes.map(rt=>`<span class="chip chip-hw" style="font-size:9px">${rt||'HW'}</span>`).join(' ')
-      : '—';
     return `<tr>
-      <td>${r.date}</td>
-      <td>${src}</td>
-      <td>${routeStr}</td>
+      <td>${r.date.slice(5)}</td>
       <td>${r.opStart||'—'}</td>
       <td>${r.opEnd||'—'}</td>
       <td class="r">${r.g2gMins!=null?fmtDur(r.g2gMins):'—'}</td>
@@ -550,6 +742,42 @@ function renderTable(rows) {
   }).join('');
 }
 
+function switchView(name) {
+  document.querySelectorAll('#view-tabs .tab').forEach(t => t.classList.toggle('active', t.dataset.view === name));
+  document.getElementById('view-log').style.display  = name === 'log'  ? '' : 'none';
+  document.getElementById('view-laps').style.display = name === 'laps' ? '' : 'none';
+}
+
+function renderLapTable(rows) {
+  const DAY  = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const tbody = document.getElementById('lap-table-body');
+  if (!tbody) return;
+  const allLaps = [];
+  rows.forEach(r => {
+    const dow = DAY[new Date(r.date + 'T00:00:00').getDay()];
+    if (r.laps && r.laps.length) {
+      // Full lap detail from Slack parse
+      r.laps.forEach(l => allLaps.push({ date: r.date.slice(5), day: dow, ...l }));
+    } else if (r.opStart && r.g2gMins) {
+      // Fall back: single row using daily G2G (seed / history entries)
+      const routeLabel = r.routes && r.routes.length ? r.routes.join(', ') : 'Heiwajima';
+      allLaps.push({ date: r.date.slice(5), day: dow, route: routeLabel,
+                     lap: null, startTime: r.opStart, lapMins: r.g2gMins });
+    }
+  });
+  if (!allLaps.length) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#475569;padding:24px">No data</td></tr>';
+    return;
+  }
+  tbody.innerHTML = allLaps.map(l => `<tr>
+    <td>${l.date}</td>
+    <td style="color:var(--muted)">${l.day}</td>
+    <td>${l.route||'—'}</td>
+    <td>${l.startTime}</td>
+    <td class="r">${l.lapMins !== null ? fmtDur(l.lapMins) : '—'}</td>
+  </tr>`).join('');
+}
+
 function deleteRow(date) {
   if (!confirm(`Remove entry for ${date}?`)) return;
   log = log.filter(r => r.date !== date);
@@ -561,6 +789,7 @@ function deleteRow(date) {
 function saveState() {
   try {
     const state = {
+      version: STATE_VERSION,
       log,
       planStart: document.getElementById('plan-start').value,
       dailyTarget: document.getElementById('daily-target').value,
@@ -573,36 +802,49 @@ function saveState() {
   } catch(e) { console.warn('Save failed:', e); }
 }
 
+const STATE_VERSION = '2026.1';
+
 function loadState() {
   try {
+    // Always seed from hardcoded historical data
+    log = SEED_DATA.map(d => ({...d}));
+    allRoutes.add('Heiwajima');
+    activeRoutes.add('Heiwajima');
+
+    // Merge localStorage: slack entries always win (allows correcting seed dates);
+    // old history entries only fill in non-seed dates.
+    // If the stored version doesn't match (e.g. stale 2025 dates), discard the
+    // saved log but keep user settings.
     const raw = localStorage.getItem('sds-ops-tracker');
-    if (!raw) return false;
-    const state = JSON.parse(raw);
-    log = state.log || [];
-    allRoutes   = new Set(state.allRoutes || []);
-    activeRoutes = new Set(state.activeRoutes || []);
-    if (state.planStart)    document.getElementById('plan-start').value    = state.planStart;
-    if (state.dailyTarget)  document.getElementById('daily-target').value  = state.dailyTarget;
-    if (state.threshold)    document.getElementById('threshold').value     = state.threshold;
-    if (state.daysWeek)     document.getElementById('days-week').value     = state.daysWeek;
-    return log.length > 0;
+    if (raw) {
+      const state = JSON.parse(raw);
+      if (state.version === STATE_VERSION && state.log) {
+        const logMap = new Map(log.map(r => [r.date, r]));
+        state.log.forEach(r => {
+          if (r.source === 'slack' || !logMap.has(r.date)) logMap.set(r.date, r);
+          r.routes && r.routes.forEach(rt => { allRoutes.add(rt); activeRoutes.add(rt); });
+        });
+        log = [...logMap.values()].sort((a,b) => a.date.localeCompare(b.date));
+      }
+      if (state.planStart)   document.getElementById('plan-start').value   = state.planStart;
+      if (state.dailyTarget) document.getElementById('daily-target').value = state.dailyTarget;
+      if (state.threshold)   document.getElementById('threshold').value    = state.threshold;
+      if (state.daysWeek)    document.getElementById('days-week').value    = state.daysWeek;
+      if (state.activeRoutes) activeRoutes = new Set(state.activeRoutes);
+    }
+    return true;
   } catch(e) { console.warn('Load failed:', e); return false; }
 }
 
-// Auto-save after every commit
+// Auto-save after every slack commit
 const _commitSlack = commitSlack;
 commitSlack = function() { _commitSlack(); saveState(); };
-const _importHistory = importHistory;
-importHistory = function() { _importHistory(); saveState(); };
 
 // Auto-load on startup
-if (!loadState()) {
-  document.getElementById('status-msg').textContent = 'No saved data — import historical TSV or paste a Slack thread';
-} else {
-  renderRouteFilter();
-  rerender();
-  document.getElementById('status-msg').textContent = `✓ Restored ${log.length} days from saved data`;
-}
+loadState();
+renderRouteFilter();
+rerender();
+document.getElementById('status-msg').textContent = `✓ ${log.length} days loaded`;
 </script>
 </body>
 </html>
