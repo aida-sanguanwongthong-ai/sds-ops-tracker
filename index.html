@@ -811,7 +811,7 @@ function renderLapTable(rows) {
   tbody.innerHTML = allLaps.map(l => `<tr>
     <td>${l.date}</td>
     <td style="color:var(--muted)">${l.day}</td>
-    <td>${l.route||'—'}</td>
+    <td>${normalizeRoute(l.route)||'—'}</td>
     <td>${l.startTime}</td>
     <td class="r">${l.lapMins !== null ? fmtDur(l.lapMins) : '—'}</td>
   </tr>`).join('');
