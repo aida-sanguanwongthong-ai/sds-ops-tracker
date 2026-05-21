@@ -90,20 +90,6 @@
 </div>
 
 
-<!-- SLACK INPUT -->
-<section>
-  <div class="row" style="margin-bottom:8px">
-    <label>Paste xxx連絡事項 thread — one day at a time</label>
-  </div>
-  <textarea id="slack-paste" placeholder="Paste the full thread. Date line + 開始/終了 messages.&#10;&#10;Example:&#10;2025/05/20&#10;15:29 Heiwajima urban route (ロータリーなし)1周目終了 渋滞:無し&#10;15:30 Heiwajima urban route (ロータリーなし) 2周目開始&#10;16:45 Heiwajima urban route 2周目終了 ODO: 72533&#10;Lunch 1:00"></textarea>
-  <div class="row" style="margin-top:8px;gap:8px">
-    <button onclick="parseSlack()">Parse</button>
-    <button class="sec" onclick="commitSlack()">Add to Log ↓</button>
-    <button class="sec" onclick="document.getElementById('slack-paste').value='';document.getElementById('slack-preview').innerHTML=''">Clear</button>
-  </div>
-  <div id="slack-preview"></div>
-</section>
-
 <!-- STATS -->
 <section class="stats-row">
   <div class="stat"><div class="stat-label">Actual Accum.</div><div class="stat-value info" id="s-actual">—</div><div class="stat-sub">total hrs logged</div></div>
