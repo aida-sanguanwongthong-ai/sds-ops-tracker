@@ -453,7 +453,7 @@ function normalizeRoute(r) {
   r = (r || '').trim();
   const noMerge = /no.?merge|ロータリーなし/i.test(r);
   if (/heiwajima\s+urban|^urban\s+(merge|no.?merge)/i.test(r))
-    return noMerge ? 'HW Urban (no-merge)' : 'HW Urban (merge)';
+    return noMerge ? 'Heiwajima Urban route (no-merge)' : 'Heiwajima Urban route';
   if (/otemachi/i.test(r))       return 'Otemachi';
   if (/フリー走行/i.test(r))      return 'Free run';
   if (/高速道路込み/i.test(r))    return 'Hwy+Loop';
