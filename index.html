@@ -597,7 +597,7 @@ function parseSlack() {
     g2gMins, lunchMins, totalHrs,
     startOdo, endOdo,
     km: startOdo&&endOdo ? endOdo-startOdo : null,
-    planHrs: 10,
+    planHrs: 8,
     otherRoutes: excludedRoutes,
     laps,
   };
@@ -1104,7 +1104,7 @@ function saveState() {
   } catch(e) { console.warn('Save failed:', e); }
 }
 
-const STATE_VERSION = '2026.1';
+const STATE_VERSION = '2026.2';
 
 function loadState() {
   try {
