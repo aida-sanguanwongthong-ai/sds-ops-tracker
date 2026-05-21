@@ -75,7 +75,19 @@
 <header>
   <h1>SDS OPS // HOURS TRACKER</h1>
   <span>Heiwajima · Accumulated vs Planned</span>
+  <div style="margin-left:auto;display:flex;align-items:center;gap:10px">
+    <span id="gh-sync-status" style="font-size:11px"></span>
+    <button class="sec" onclick="handlePublish()" title="Publish to GitHub"
+      style="font-size:10px;padding:3px 8px;opacity:.35;letter-spacing:.04em">↑ sync</button>
+  </div>
 </header>
+<div id="gh-token-row" style="display:none;margin-bottom:16px">
+  <div class="row" style="gap:8px;align-items:center">
+    <label>GitHub token</label>
+    <input id="gh-token" type="password" placeholder="ghp_… — saved once, then hidden"
+           style="flex:1;max-width:340px" oninput="saveGHToken(this.value)">
+  </div>
+</div>
 
 
 <!-- SLACK INPUT -->
@@ -137,19 +149,29 @@
   </table>
 </section>
 
-<!-- LAP DETAIL TABLE -->
-<section class="table-wrap" id="view-laps" style="display:none">
-  <table>
-    <thead>
-      <tr>
-        <th>Date</th><th>Day</th><th>Route</th><th>Start</th><th class="r">Lap Time</th>
-      </tr>
-    </thead>
-    <tbody id="lap-table-body">
-      <tr><td colspan="5" style="text-align:center;color:#475569;padding:24px">No lap data — paste Slack threads to populate</td></tr>
-    </tbody>
-  </table>
-</section>
+<!-- LAP DETAIL VIEW -->
+<div id="view-laps" style="display:none">
+  <section class="chart-wrap" style="margin-bottom:12px">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px">
+      <div id="lap-chart-title" style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)">Lap Time by Day of Week — range &amp; avg</div>
+      <div id="lap-mode-toggle" style="display:flex;gap:4px;"></div>
+    </div>
+    <div id="lap-route-filter" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;"></div>
+    <canvas id="lap-chart" style="max-height:280px"></canvas>
+  </section>
+  <section class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th><th>Day</th><th>Route</th><th>Start</th><th class="r">Lap Time</th>
+        </tr>
+      </thead>
+      <tbody id="lap-table-body">
+        <tr><td colspan="5" style="text-align:center;color:#475569;padding:24px">No lap data — paste Slack threads to populate</td></tr>
+      </tbody>
+    </table>
+  </section>
+</div>
 
 <script>
 // ── SEED DATA (historical, fixed) ─────────────────────────────────────────
@@ -319,7 +341,6 @@ const SEED_DATA = [
      {route:'Heiwajima urban route (ロータリーなし)',lap:2,  startTime:'08:02',startMins:482,  lapMins:24},
      {route:'Heiwajima urban route (ロータリーなし)',lap:3,  startTime:'08:30',startMins:510,  lapMins:33},
      {route:'Heiwajima urban route (ロータリーなし)',lap:4,  startTime:'09:06',startMins:546,  lapMins:27},
-     {route:'Heiwajima urban route (ロータリーなし)',lap:5,  startTime:'09:41',startMins:581,  lapMins:48},
      {route:'Heiwajima urban route (ロータリーなし)',lap:6,  startTime:'10:33',startMins:633,  lapMins:23},
      {route:'Heiwajima urban route (ロータリーなし)',lap:7,  startTime:'13:39',startMins:819,  lapMins:26},
      {route:'Heiwajima urban route (ロータリーなし)',lap:8,  startTime:'14:55',startMins:895,  lapMins:22},
@@ -362,6 +383,10 @@ const SEED_DATA = [
 let log = [];
 let pendingSlack = null;
 let chartInstance = null;
+let lapChartInstance = null;
+let selectedLapRoute = null;
+let lapChartMode = 'dow'; // 'dow' | 'hour'
+let _lapRows = null;
 
 // ── UTILS ──────────────────────────────────────────────────────────────────
 const toNum = v => parseFloat(String(v||0).replace(/,/g,''))||0;
@@ -401,6 +426,21 @@ function autoLunch(g2gMins) {
 
 // Returns true for Heiwajima urban route variants (all merge/no-merge/rotary variants)
 const isHeiwajimaUrban = s => /heiwajima\s+urban|^urban\s+(merge|no.?merge)/i.test(s || '');
+
+// Normalise raw route strings to canonical chart labels
+function normalizeRoute(r) {
+  r = (r || '').trim();
+  const noMerge = /no.?merge|ロータリーなし/i.test(r);
+  if (/heiwajima\s+urban|^urban\s+(merge|no.?merge)/i.test(r))
+    return noMerge ? 'HW Urban (no-merge)' : 'HW Urban (merge)';
+  if (/otemachi/i.test(r))       return 'Otemachi';
+  if (/フリー走行/i.test(r))      return 'Free run';
+  if (/高速道路込み/i.test(r))    return 'Hwy+Loop';
+  if (/高速ルート/i.test(r))      return 'Highway';
+  if (/昭和島/i.test(r))          return 'Shōwajima';
+  if (/平和島ループ/i.test(r))    return 'HW Loop';
+  return r.length > 18 ? r.slice(0, 16) + '…' : r;
+}
 
 // Sum only Heiwajima urban lap minutes for a day entry
 function hwHrs(d) {
@@ -643,6 +683,7 @@ function rerender() {
   renderChart([...rows, ...projRows]);
   renderTable(rows);
   renderLapTable(rows);
+  renderLapChart(rows);
 }
 
 function renderStats(rows) {
@@ -752,11 +793,283 @@ function renderLapTable(rows) {
   </tr>`).join('');
 }
 
+function selectLapRoute(r) {
+  selectedLapRoute = r;
+  renderLapChart(_lapRows);
+}
+
+function setLapChartMode(m) {
+  lapChartMode = m;
+  renderLapChart(_lapRows);
+}
+
+function renderLapChart(rows) {
+  _lapRows = rows;
+
+  // ── 1. Collect all laps grouped by normalised route ──────────────────────
+  const allByRoute = {};
+  rows.forEach(r => {
+    if (!r.laps) return;
+    r.laps.forEach(l => {
+      if (l.lapMins === null || l.lapMins === undefined) return;
+      const key = normalizeRoute(l.route);
+      if (!allByRoute[key]) allByRoute[key] = [];
+      allByRoute[key].push({ lapMins: l.lapMins, date: r.date, startMins: l.startMins });
+    });
+  });
+
+  const CHART_HIDDEN = new Set(['Free run', 'Hwy+Loop', 'Highway', 'Shōwajima', 'HW Loop']);
+  const routes = Object.keys(allByRoute)
+    .filter(r => !CHART_HIDDEN.has(r))
+    .sort((a, b) => allByRoute[b].length - allByRoute[a].length);
+  if (!routes.length) return;
+
+  if (!selectedLapRoute || !allByRoute[selectedLapRoute]) selectedLapRoute = routes[0];
+
+  // ── 2. Mode toggle ────────────────────────────────────────────────────────
+  const modeEl = document.getElementById('lap-mode-toggle');
+  if (modeEl) {
+    modeEl.innerHTML = [['dow','By Day'],['hour','By Hour'],['dayhour','Day × Hour']].map(([m, label]) => {
+      const active = m === lapChartMode;
+      return `<button onclick="setLapChartMode('${m}')"
+        style="background:${active?'var(--accent)':'var(--surface)'};color:${active?'#000':'var(--muted)'};
+               border:1px solid ${active?'var(--accent)':'var(--border)'};padding:4px 11px;
+               font-family:inherit;font-size:11px;border-radius:4px;cursor:pointer;letter-spacing:.04em"
+        >${label}</button>`;
+    }).join('');
+  }
+
+  // ── 3. Route chips ────────────────────────────────────────────────────────
+  const filterEl = document.getElementById('lap-route-filter');
+  if (filterEl) {
+    filterEl.innerHTML = routes.map(r => {
+      const active = r === selectedLapRoute;
+      return `<button onclick="selectLapRoute('${r.replace(/'/g,"\\'")}')"
+        style="background:${active?'var(--accent)':'var(--surface)'};color:${active?'#000':'var(--text)'};
+               border:1px solid ${active?'var(--accent)':'var(--border)'};padding:5px 12px;
+               font-family:inherit;font-size:11px;border-radius:4px;cursor:pointer;letter-spacing:.04em"
+        >${r} <span style="opacity:.6;font-size:10px">(${allByRoute[r].length})</span></button>`;
+    }).join('');
+  }
+
+  // ── 4. Group by chosen dimension ──────────────────────────────────────────
+  let labels, rangeData, avgData, counts;
+  const lapsForRoute = allByRoute[selectedLapRoute] || [];
+  const titleEl = document.getElementById('lap-chart-title');
+
+  if (lapChartMode === 'hour') {
+    const byHour = {};
+    lapsForRoute.forEach(({ lapMins, startMins }) => {
+      if (startMins == null) return;
+      const h = Math.floor(startMins / 60);
+      if (!byHour[h]) byHour[h] = [];
+      byHour[h].push(lapMins);
+    });
+    const hours = Object.keys(byHour).map(Number).sort((a, b) => a - b);
+    labels    = hours.map(h => `${h}:00`);
+    rangeData = hours.map(h => { const l = byHour[h]; return l.length ? [Math.min(...l), Math.max(...l)] : null; });
+    avgData   = hours.map(h => { const l = byHour[h]; return l.length ? +(l.reduce((s,v)=>s+v,0)/l.length).toFixed(1) : null; });
+    counts    = hours.map(h => byHour[h].length);
+    if (titleEl) titleEl.textContent = 'Lap Time by Start Hour — range & avg';
+
+  } else if (lapChartMode === 'dayhour') {
+    const DOW_IDX = { Mon:0, Tue:1, Wed:2, Thu:3, Fri:4 };
+    const bucket  = {};
+    lapsForRoute.forEach(({ lapMins, date, startMins }) => {
+      if (startMins == null) return;
+      const d   = new Date(date + 'T00:00:00');
+      const dow = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()];
+      if (!(dow in DOW_IDX)) return;
+      const h   = Math.floor(startMins / 60);
+      const key = `${dow}|${h}`;
+      if (!bucket[key]) bucket[key] = { dow, h, laps: [] };
+      bucket[key].laps.push(lapMins);
+    });
+    const keys = Object.keys(bucket).sort((a, b) => {
+      const [ad, ah] = a.split('|'), [bd, bh] = b.split('|');
+      return (DOW_IDX[ad] - DOW_IDX[bd]) || (Number(ah) - Number(bh));
+    });
+    labels    = keys.map(k => `${bucket[k].dow} ${bucket[k].h}h`);
+    rangeData = keys.map(k => { const l = bucket[k].laps; return [Math.min(...l), Math.max(...l)]; });
+    avgData   = keys.map(k => { const l = bucket[k].laps; return +(l.reduce((s,v)=>s+v,0)/l.length).toFixed(1); });
+    counts    = keys.map(k => bucket[k].laps.length);
+    if (titleEl) titleEl.textContent = 'Lap Time by Day × Hour — range & avg';
+
+  } else {
+    const DOW  = ['Mon','Tue','Wed','Thu','Fri'];
+    const byDay = { Mon:[],Tue:[],Wed:[],Thu:[],Fri:[] };
+    lapsForRoute.forEach(({ lapMins, date }) => {
+      const d   = new Date(date + 'T00:00:00');
+      const day = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()];
+      if (byDay[day]) byDay[day].push(lapMins);
+    });
+    labels    = DOW;
+    rangeData = DOW.map(day => { const l = byDay[day]; return l.length ? [Math.min(...l), Math.max(...l)] : null; });
+    avgData   = DOW.map(day => { const l = byDay[day]; return l.length ? +(l.reduce((s,v)=>s+v,0)/l.length).toFixed(1) : null; });
+    counts    = DOW.map(day => byDay[day].length);
+    if (titleEl) titleEl.textContent = 'Lap Time by Day of Week — range & avg';
+  }
+
+  // ── 5. Render chart ───────────────────────────────────────────────────────
+  const ctx = document.getElementById('lap-chart').getContext('2d');
+  if (lapChartInstance) lapChartInstance.destroy();
+  lapChartInstance = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Range (min – max)',
+          data: rangeData,
+          backgroundColor: 'rgba(56,189,248,.18)',
+          borderColor: 'rgba(56,189,248,.45)',
+          borderWidth: 1.5,
+          borderRadius: 4,
+          order: 2,
+        },
+        {
+          type: 'line',
+          label: 'Avg',
+          data: avgData,
+          showLine: false,
+          pointRadius: 7,
+          pointHoverRadius: 9,
+          pointStyle: 'circle',
+          backgroundColor: '#38bdf8',
+          borderColor: '#38bdf8',
+          pointBackgroundColor: '#38bdf8',
+          order: 1,
+        },
+      ]
+    },
+    options: {
+      responsive: true,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: true, labels: { color: '#94a3b8', font: { size: 11 }, boxWidth: 12, padding: 16 } },
+        tooltip: {
+          backgroundColor: '#1e2330', borderColor: '#2d3548', borderWidth: 1,
+          titleColor: '#94a3b8', bodyColor: '#e2e8f0', padding: 11,
+          callbacks: {
+            title: c => `${c[0].label}  ·  ${counts[c[0].dataIndex]} laps`,
+            label: c => {
+              if (c.parsed.y === null || c.parsed.y === undefined) return null;
+              if (c.dataset.label === 'Avg') return ` Avg: ${c.parsed.y} min`;
+              const d = rangeData[c.dataIndex];
+              return d ? ` Range: ${d[0]} – ${d[1]} min` : null;
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: 'rgba(255,255,255,.04)' },
+          ticks: {
+            color: '#94a3b8',
+            font: { size: lapChartMode === 'dayhour' ? 9 : (lapChartMode === 'hour' ? 11 : 13), weight: '600' },
+            maxRotation: lapChartMode === 'dayhour' ? 45 : 0,
+            minRotation: lapChartMode === 'dayhour' ? 45 : 0,
+          }
+        },
+        y: {
+          grid: { color: 'rgba(255,255,255,.04)' },
+          ticks: { color: '#64748b', font: { size: 10 }, callback: v => v + 'm' },
+          title: { display: true, text: 'Lap Time (min)', color: '#475569', font: { size: 11 } },
+          beginAtZero: false
+        }
+      }
+    }
+  });
+}
+
 function deleteRow(date) {
   if (!confirm(`Remove entry for ${date}?`)) return;
   log = log.filter(r => r.date !== date);
   saveState();
   rerender();
+}
+
+// ── GITHUB SYNC ───────────────────────────────────────────────────────────
+const GH_API = 'https://api.github.com/repos/aida-sanguanwongthong-ai/sds-ops-tracker/contents/data.json';
+const GH_RAW = 'https://raw.githubusercontent.com/aida-sanguanwongthong-ai/sds-ops-tracker/main/data.json';
+
+async function loadRemoteData() {
+  try {
+    const res = await fetch(GH_RAW + '?_=' + Date.now());
+    if (!res.ok) return;
+    const extra = await res.json();
+    if (!Array.isArray(extra) || !extra.length) return;
+    const logMap = new Map(log.map(r => [r.date, r]));
+    extra.forEach(r => logMap.set(r.date, r));           // remote always wins
+    log = [...logMap.values()].sort((a,b) => a.date.localeCompare(b.date));
+    rerender();
+  } catch(e) { /* silent — no remote data yet */ }
+}
+
+function saveGHToken(v) {
+  v = v.trim();
+  if (!v) return;
+  localStorage.setItem('gh-token', v);
+  document.getElementById('gh-token-row').style.display = 'none';
+}
+
+function handlePublish() {
+  const token = localStorage.getItem('gh-token') || '';
+  if (!token) {
+    // First time — reveal token input
+    const row = document.getElementById('gh-token-row');
+    row.style.display = '';
+    document.getElementById('gh-token').focus();
+    return;
+  }
+  publishToGitHub();
+}
+
+async function publishToGitHub() {
+  const statusEl = document.getElementById('gh-sync-status');
+  const token    = localStorage.getItem('gh-token') || '';
+
+  statusEl.textContent = 'Publishing…';
+  statusEl.style.color = 'var(--muted)';
+
+  const headers = {
+    'Authorization': `token ${token}`,
+    'Accept':        'application/vnd.github.v3+json',
+    'Content-Type':  'application/json',
+  };
+
+  try {
+    // 1. Fetch current file SHA (needed to update an existing file)
+    let sha = null;
+    const getRes = await fetch(GH_API, { headers });
+    if (getRes.ok)              sha = (await getRes.json()).sha;
+    else if (getRes.status !== 404) throw new Error(`GitHub ${getRes.status}`);
+
+    // 2. Collect all slack-sourced entries to publish
+    const toPublish = log.filter(r => r.source === 'slack');
+    if (!toPublish.length) {
+      statusEl.textContent = 'Nothing to publish (add a Slack entry first)';
+      statusEl.style.color = 'var(--muted)';
+      return;
+    }
+
+    // 3. Encode JSON and commit
+    const json    = JSON.stringify(toPublish, null, 2);
+    const content = btoa(unescape(encodeURIComponent(json)));
+    const dates   = toPublish.map(r => r.date).join(', ');
+    const body    = { message: `data: ${dates}`, content };
+    if (sha) body.sha = sha;
+
+    const putRes = await fetch(GH_API, { method: 'PUT', headers, body: JSON.stringify(body) });
+    if (!putRes.ok) { const e = await putRes.json(); throw new Error(e.message || putRes.status); }
+
+    statusEl.textContent = `✓ Published ${toPublish.length} day${toPublish.length>1?'s':''} — live in ~1 min`;
+    statusEl.style.color = 'var(--green)';
+    setTimeout(() => { if (statusEl.textContent.startsWith('✓')) statusEl.textContent = ''; }, 7000);
+  } catch(e) {
+    statusEl.textContent = `✗ ${e.message}`;
+    statusEl.style.color = 'var(--red)';
+  }
 }
 
 // ── LOCALSTORAGE ──────────────────────────────────────────────────────────
@@ -803,6 +1116,11 @@ commitSlack = function() { _commitSlack(); saveState(); };
 // Auto-load on startup
 loadState();
 rerender();
+
+// Token lives in localStorage — input only shown on first use
+
+// Fetch remote data.json and merge (async — re-renders when ready)
+loadRemoteData();
 </script>
 </body>
 </html>
