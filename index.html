@@ -242,7 +242,7 @@ const SEED_DATA = [
      {route:'Heiwajima urban route',   lap:4, startTime:'14:55',startMins:895,  lapMins:20},
      {route:'フリー走行',               lap:1, startTime:'16:30',startMins:990,  lapMins:52},
    ]},
-  {date:'2026-05-06',routes:['Heiwajima'],source:'history',opStart:'09:52',opEnd:'17:37',g2gMins:465, lunchMins:60, totalHrs:6.75, startOdo:72013,endOdo:72114,km:101, planHrs:0,dataQuality:1.000,
+  {date:'2026-05-06',routes:['Heiwajima'],source:'history',opStart:'09:52',opEnd:'17:37',g2gMins:465, lunchMins:60, totalHrs:6.75, startOdo:72013,endOdo:72114,km:101, planHrs:0,
    laps:[
      {route:'Otemachi route',                    lap:1, startTime:'10:50',startMins:650,  lapMins:20},
      {route:'Otemachi route',                    lap:2, startTime:'11:12',startMins:672,  lapMins:20},
@@ -255,8 +255,8 @@ const SEED_DATA = [
      {route:'Heiwajima urban route (no-merge)',  lap:3, startTime:'16:05',startMins:965,  lapMins:25},
      {route:'Heiwajima urban route (no-merge)',  lap:4, startTime:'16:35',startMins:995,  lapMins:28},
    ]},
-  {date:'2026-05-07',routes:['Heiwajima'],source:'history',opStart:'16:04',opEnd:'17:19',g2gMins:75,  lunchMins:0,  totalHrs:1.25, startOdo:72116,endOdo:72147,km:31,  planHrs:0,dataQuality:0.995},
-  {date:'2026-05-12',routes:['Heiwajima'],source:'history',opStart:'14:00',opEnd:'16:14',g2gMins:134, lunchMins:0,  totalHrs:2.23, startOdo:72156,endOdo:72191,km:35,  planHrs:5,dataQuality:1.000,
+  {date:'2026-05-07',routes:['Heiwajima'],source:'history',opStart:'16:04',opEnd:'17:19',g2gMins:75,  lunchMins:0,  totalHrs:1.25, startOdo:72116,endOdo:72147,km:31,  planHrs:0,dataQuality:0.988},
+  {date:'2026-05-12',routes:['Heiwajima'],source:'history',opStart:'14:00',opEnd:'16:14',g2gMins:134, lunchMins:0,  totalHrs:2.23, startOdo:72156,endOdo:72191,km:35,  planHrs:5,
    laps:[
      {route:'Heiwajima urban route',lap:1, startTime:'14:00',startMins:840, lapMins:23},
      {route:'Heiwajima urban route',lap:2, startTime:'14:29',startMins:869, lapMins:26},
@@ -1125,7 +1125,7 @@ function saveState() {
   } catch(e) { console.warn('Save failed:', e); }
 }
 
-const STATE_VERSION = '2026.4';
+const STATE_VERSION = '2026.5';
 
 function loadState() {
   try {
