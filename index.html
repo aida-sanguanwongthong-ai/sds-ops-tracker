@@ -93,7 +93,7 @@
 <!-- STATS -->
 <section class="stats-row">
   <div class="stat"><div class="stat-label">Actual Accum.</div><div class="stat-value info" id="s-actual">—</div><div class="stat-sub">total hrs logged</div></div>
-  <div class="stat"><div class="stat-label">Actual × 75%</div><div class="stat-value" id="s-actual75">—</div><div class="stat-sub">of actual</div></div>
+  <div class="stat"><div class="stat-label" id="lbl-actual-dq">Actual × DQ%</div><div class="stat-value" id="s-actual75">—</div><div class="stat-sub">quality-adjusted</div></div>
   <div class="stat"><div class="stat-label">Planned Accum.</div><div class="stat-value ok" id="s-planned">—</div><div class="stat-sub">target to date</div></div>
   <div class="stat"><div class="stat-label">Planned × 75%</div><div class="stat-value" id="s-planned75">—</div><div class="stat-sub">→ 200h milestone</div></div>
   <div class="stat"><div class="stat-label">Days Logged</div><div class="stat-value" id="s-days">—</div><div class="stat-sub" id="s-days-sub">—</div></div>
@@ -105,7 +105,7 @@
   <canvas id="main-chart"></canvas>
   <div class="legend">
     <div class="legend-item"><div class="ld" style="background:#38bdf8"></div>Actual Accum.</div>
-    <div class="legend-item"><div class="ld" style="background:#0ea5e9;opacity:.6"></div>Actual × 75%</div>
+    <div class="legend-item"><div class="ld" style="background:#0ea5e9;opacity:.6"></div>Actual × DQ%</div>
     <div class="legend-item"><div class="ld" style="background:#4b5563"></div>Planned Accum.</div>
     <div class="legend-item"><div class="ld" style="background:#374151;opacity:.8"></div>Planned × 75%</div>
   </div>
@@ -125,12 +125,13 @@
         <th>Date</th>
         <th>Op Start</th><th>Op End</th>
         <th class="r">G2G</th><th class="r">Urban hrs</th>
+        <th class="r">DQ%</th>
         <th class="r">Plan hrs</th><th class="r">Plan Accum.</th>
         <th class="r">Actual Accum.</th><th class="r">Δ vs Plan</th>
       </tr>
     </thead>
     <tbody id="table-body">
-      <tr><td colspan="9" style="text-align:center;color:#475569;padding:24px">No data</td></tr>
+      <tr><td colspan="10" style="text-align:center;color:#475569;padding:24px">No data</td></tr>
     </tbody>
   </table>
 </section>
@@ -363,7 +364,7 @@ const SEED_DATA = [
      {route:'Heiwajima urban route (ロータリーなし)',lap:19, startTime:'18:45',startMins:1125, lapMins:23},
      {route:'Heiwajima urban route (ロータリーなし)',lap:20, startTime:'19:10',startMins:1150, lapMins:18},
    ]},
-  {date:'2026-05-21',routes:['Heiwajima'],source:'history',opStart:'07:31',opEnd:'19:12',g2gMins:701, lunchMins:120,totalHrs:9.68, startOdo:72794,endOdo:72916,km:122, planHrs:8,
+  {date:'2026-05-21',routes:['Heiwajima'],source:'history',opStart:'07:31',opEnd:'19:12',g2gMins:701, lunchMins:120,totalHrs:9.68, startOdo:72794,endOdo:72916,km:122, planHrs:8,dataQuality:0.855,
    laps:[
      {route:'Heiwajima urban route (ロータリーなし)',lap:1,  startTime:'07:31',startMins:451,  lapMins:26},
      {route:'Heiwajima urban route (ロータリーなし)',lap:2,  startTime:'08:01',startMins:481,  lapMins:32},
@@ -384,7 +385,7 @@ const SEED_DATA = [
      {route:'Heiwajima urban route (ロータリーなし)',lap:17, startTime:'18:29',startMins:1109, lapMins:24},
      {route:'Heiwajima urban route (ロータリーなし)',lap:18, startTime:'18:55',startMins:1135, lapMins:17},
    ]},
-  {date:'2026-05-22',routes:['Heiwajima'],source:'history',opStart:'07:38',opEnd:'19:04',g2gMins:686, lunchMins:120,totalHrs:9.43, startOdo:72916,endOdo:73051,km:135, planHrs:8,
+  {date:'2026-05-22',routes:['Heiwajima'],source:'history',opStart:'07:38',opEnd:'19:04',g2gMins:686, lunchMins:120,totalHrs:9.43, startOdo:72916,endOdo:73051,km:135, planHrs:8,dataQuality:0.959,
    laps:[
      {route:'Heiwajima urban route (ロータリーなし)',lap:1,  startTime:'07:38',startMins:458,  lapMins:27},
      {route:'Heiwajima urban route (ロータリーなし)',lap:2,  startTime:'08:11',startMins:491,  lapMins:26},
@@ -662,11 +663,13 @@ function rerender() {
   const planStart = '2026-05-12';
 
   // First pass: compute actual accumulation (Heiwajima urban laps only)
-  let aAccum = 0;
+  let aAccum = 0, aAccumDQ = 0;
   const withActual = data.map(d => {
     const urban = hwHrs(d);
-    aAccum = +(aAccum + urban).toFixed(2);
-    return { ...d, urbanHrs: urban, aAccum };
+    const dqRatio = d.dataQuality ?? 0.75;
+    aAccum   = +(aAccum   + urban).toFixed(2);
+    aAccumDQ = +(aAccumDQ + urban * dqRatio).toFixed(2);
+    return { ...d, urbanHrs: urban, dqRatio, aAccum, aAccumDQ };
   });
 
   // Planned baseline = actual accumulated on last day before planStart (5/7)
@@ -721,13 +724,19 @@ function rerender() {
 function renderStats(rows) {
   const last = rows[rows.length-1];
   const lastPlan = [...rows].reverse().find(r => r.pAccum !== null) || last;
-  const aA=last.aAccum, pA=lastPlan.pAccum||0, delta=aA-pA;
+  const aA=last.aAccum, aDQ=last.aAccumDQ, pA=lastPlan.pAccum||0, delta=aA-pA;
+  // Compute weighted avg quality ratio across all days with actual data
+  const daysWithData = rows.filter(r => r.aAccum !== undefined && r.urbanHrs > 0);
+  const avgDQ = daysWithData.length
+    ? (daysWithData.reduce((s,r)=>s+r.dqRatio,0)/daysWithData.length)
+    : 0.75;
   document.getElementById('s-actual').textContent    = fmtH(aA);
-  document.getElementById('s-actual75').textContent  = fmtH(aA*.75);
+  document.getElementById('s-actual75').textContent  = fmtH(aDQ ?? aA*.75);
   document.getElementById('s-planned').textContent   = fmtH(pA);
   document.getElementById('s-planned75').textContent = fmtH(pA*.75);
   document.getElementById('s-days').textContent      = rows.length;
   document.getElementById('s-days-sub').textContent  = (rows.length/5).toFixed(1)+' weeks';
+  document.getElementById('lbl-actual-dq').textContent = `Actual × ${Math.round(avgDQ*100)}% DQ`;
   const dEl = document.getElementById('s-delta');
   dEl.textContent = (delta>=0?'+':'')+fmtH(delta);
   dEl.className   = 'stat-value '+(delta>=0?'ok':'warn');
@@ -735,8 +744,8 @@ function renderStats(rows) {
 
 function renderChart(rows) {
   const labels = rows.map(r => r.date.slice(5));
-  const aA  = rows.map(r => r.aAccum !== null ? r.aAccum : null);
-  const a75 = rows.map(r => r.aAccum !== null ? +(r.aAccum*.75).toFixed(2) : null);
+  const aA  = rows.map(r => r.aAccum  !== null && r.aAccum  !== undefined ? r.aAccum  : null);
+  const a75 = rows.map(r => r.aAccumDQ !== null && r.aAccumDQ !== undefined ? r.aAccumDQ : (r.aAccum !== null && r.aAccum !== undefined ? +(r.aAccum*.75).toFixed(2) : null));
   const pA  = rows.map(r => r.pAccum !== null ? r.pAccum : null);
   const p75 = rows.map(r => r.pAccum !== null ? +(r.pAccum*.75).toFixed(2) : null);
   const ctx = document.getElementById('main-chart').getContext('2d');
@@ -747,7 +756,7 @@ function renderChart(rows) {
       labels,
       datasets:[
         {label:'Actual Accum.',data:aA,  borderColor:'#38bdf8',borderWidth:2.5,pointRadius:3,backgroundColor:'rgba(56,189,248,.07)',fill:false,tension:.2},
-        {label:'Actual × 75%',data:a75, borderColor:'#0ea5e9',borderWidth:1.5,borderDash:[5,4],pointRadius:2,fill:false,tension:.2},
+        {label:'Actual × DQ%',data:a75, borderColor:'#0ea5e9',borderWidth:1.5,borderDash:[5,4],pointRadius:2,fill:false,tension:.2},
         {label:'Planned Accum.',data:pA, borderColor:'#4b5563',borderWidth:1.5,pointRadius:2,backgroundColor:'rgba(75,85,99,.05)',fill:false,tension:.2},
         {label:'Planned × 75%',data:p75,borderColor:'#374151',borderWidth:1,  borderDash:[5,4],pointRadius:0,fill:false,tension:.2},
       ]
@@ -781,6 +790,7 @@ function renderTable(rows) {
       <td>${r.opEnd||'—'}</td>
       <td class="r">${r.g2gMins!=null?fmtDur(r.g2gMins):'—'}</td>
       <td class="r info">${fmtH(r.urbanHrs)}</td>
+      <td class="r" style="color:${r.dataQuality ? (r.dataQuality>=0.9?'var(--green)':r.dataQuality>=0.8?'var(--text)':'var(--orange)') : 'var(--muted)'}">${r.dataQuality ? Math.round(r.dataQuality*100)+'%' : '—'}</td>
       <td class="r">${fmtH(r.planHrs)}</td>
       <td class="r ok">${r.pAccum!==null?fmtH(r.pAccum):'—'}</td>
       <td class="r info">${fmtH(r.aAccum)}</td>
@@ -1115,7 +1125,7 @@ function saveState() {
   } catch(e) { console.warn('Save failed:', e); }
 }
 
-const STATE_VERSION = '2026.2';
+const STATE_VERSION = '2026.3';
 
 function loadState() {
   try {
