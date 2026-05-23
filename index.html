@@ -98,6 +98,7 @@
   <div class="stat"><div class="stat-label">Planned × 75%</div><div class="stat-value" id="s-planned75">—</div><div class="stat-sub">→ 200h milestone</div></div>
   <div class="stat"><div class="stat-label">Days Logged</div><div class="stat-value" id="s-days">—</div><div class="stat-sub" id="s-days-sub">—</div></div>
   <div class="stat"><div class="stat-label">vs Plan</div><div class="stat-value" id="s-delta">—</div><div class="stat-sub">actual − planned</div></div>
+  <div class="stat"><div class="stat-label">DQ vs Plan 75%</div><div class="stat-value" id="s-dq-delta">—</div><div class="stat-sub">actual DQ − plan × 75%</div></div>
 </section>
 
 <!-- CHART -->
@@ -216,7 +217,7 @@ const SEED_DATA = [
      {route:'Otemachi route',          lap:5, startTime:'15:59',startMins:959,  lapMins:22},
      {route:'Otemachi route',          lap:6, startTime:'16:23',startMins:983,  lapMins:22},
    ]},
-  {date:'2026-04-29',routes:['Heiwajima'],source:'history',opStart:'11:00',opEnd:'17:52',g2gMins:412, lunchMins:60, totalHrs:5.87, startOdo:71801,endOdo:71865,km:64,  planHrs:0,dataQuality:0.997,
+  {date:'2026-04-29',routes:['Heiwajima'],source:'history',opStart:'11:00',opEnd:'17:52',g2gMins:412, lunchMins:60, totalHrs:5.87, startOdo:71801,endOdo:71865,km:64,  planHrs:0,dataQuality:0.827,
    laps:[
      {route:'Otemachi route',          lap:1, startTime:'11:48',startMins:708,  lapMins:17},
      {route:'Otemachi route',          lap:2, startTime:'12:08',startMins:728,  lapMins:17},
@@ -740,6 +741,10 @@ function renderStats(rows) {
   const dEl = document.getElementById('s-delta');
   dEl.textContent = (delta>=0?'+':'')+fmtH(delta);
   dEl.className   = 'stat-value '+(delta>=0?'ok':'warn');
+  const dqDelta = (aDQ ?? aA*0.75) - pA*0.75;
+  const dqEl = document.getElementById('s-dq-delta');
+  dqEl.textContent = (dqDelta>=0?'+':'')+fmtH(dqDelta);
+  dqEl.className   = 'stat-value '+(dqDelta>=0?'ok':'warn');
 }
 
 function renderChart(rows) {
@@ -790,7 +795,7 @@ function renderTable(rows) {
       <td>${r.opEnd||'—'}</td>
       <td class="r">${r.g2gMins!=null?fmtDur(r.g2gMins):'—'}</td>
       <td class="r info">${fmtH(r.urbanHrs)}</td>
-      <td class="r" style="color:${r.dataQuality ? (r.dataQuality>=0.9?'var(--green)':r.dataQuality>=0.8?'var(--text)':'var(--orange)') : 'var(--muted)'}">${r.dataQuality ? Math.round(r.dataQuality*100)+'%' : '—'}</td>
+      <td class="r" style="color:${r.dataQuality!=null ? (r.dataQuality>=0.9?'var(--green)':r.dataQuality>=0.8?'var(--text)':'var(--orange)') : 'var(--muted)'}">${r.dataQuality!=null ? (r.dataQuality*100).toFixed(1)+'%' : '—'}</td>
       <td class="r">${fmtH(r.planHrs)}</td>
       <td class="r ok">${r.pAccum!==null?fmtH(r.pAccum):'—'}</td>
       <td class="r info">${fmtH(r.aAccum)}</td>
@@ -1125,7 +1130,7 @@ function saveState() {
   } catch(e) { console.warn('Save failed:', e); }
 }
 
-const STATE_VERSION = '2026.6';
+const STATE_VERSION = '2026.7';
 
 function loadState() {
   try {
