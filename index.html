@@ -386,7 +386,7 @@ const SEED_DATA = [
      {route:'Heiwajima urban route (ロータリーなし)',lap:17, startTime:'18:29',startMins:1109, lapMins:24},
      {route:'Heiwajima urban route (ロータリーなし)',lap:18, startTime:'18:55',startMins:1135, lapMins:17},
    ]},
-  {date:'2026-05-22',routes:['Heiwajima'],source:'history',opStart:'07:38',opEnd:'19:04',g2gMins:686, lunchMins:120,totalHrs:9.43, startOdo:72916,endOdo:73051,km:135, planHrs:8,dataQuality:0.860,
+  {date:'2026-05-22',routes:['Heiwajima'],source:'history',opStart:'07:38',opEnd:'19:04',g2gMins:686, lunchMins:120,totalHrs:9.43, startOdo:72916,endOdo:73051,km:135, planHrs:8,dataQuality:0.846,
    laps:[
      {route:'Heiwajima urban route (ロータリーなし)',lap:1,  startTime:'07:38',startMins:458,  lapMins:27},
      {route:'Heiwajima urban route (ロータリーなし)',lap:2,  startTime:'08:11',startMins:491,  lapMins:26},
@@ -407,6 +407,31 @@ const SEED_DATA = [
      {route:'Heiwajima urban route (ロータリーなし)',lap:17, startTime:'17:43',startMins:1063, lapMins:27},
      {route:'Heiwajima urban route (ロータリーなし)',lap:18, startTime:'18:13',startMins:1093, lapMins:23},
      {route:'Heiwajima urban route (ロータリーなし)',lap:19, startTime:'18:37',startMins:1117, lapMins:27},
+   ]},
+  {date:'2026-05-25',routes:['Heiwajima'],source:'history',opStart:'07:18',opEnd:'19:36',g2gMins:738, lunchMins:120,totalHrs:10.30,startOdo:73051,endOdo:73199,km:148, planHrs:8,
+   laps:[
+     {route:'Heiwajima urban route (ロータリーなし)',lap:1,  startTime:'07:22',startMins:442,  lapMins:20},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:2,  startTime:'07:45',startMins:465,  lapMins:29},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:3,  startTime:'08:15',startMins:495,  lapMins:21},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:4,  startTime:'08:38',startMins:518,  lapMins:34},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:5,  startTime:'09:15',startMins:555,  lapMins:26},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:6,  startTime:'09:44',startMins:584,  lapMins:26},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:7,  startTime:'10:27',startMins:627,  lapMins:24},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:8,  startTime:'10:52',startMins:652,  lapMins:24},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:9,  startTime:'11:17',startMins:677,  lapMins:24},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:10, startTime:'11:42',startMins:702,  lapMins:25},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:11, startTime:'14:24',startMins:864,  lapMins:22},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:12, startTime:'14:49',startMins:889,  lapMins:21},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:13, startTime:'15:14',startMins:914,  lapMins:26},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:14, startTime:'15:42',startMins:942,  lapMins:22},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:15, startTime:'16:14',startMins:974,  lapMins:19},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:16, startTime:'16:34',startMins:994,  lapMins:24},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:17, startTime:'16:59',startMins:1019, lapMins:28},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:18, startTime:'17:28',startMins:1048, lapMins:21},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:19, startTime:'17:59',startMins:1079, lapMins:23},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:20, startTime:'18:23',startMins:1103, lapMins:22},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:21, startTime:'18:48',startMins:1128, lapMins:21},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:22, startTime:'19:11',startMins:1151, lapMins:25},
    ]},
 ];
 
@@ -726,18 +751,15 @@ function renderStats(rows) {
   const last = rows[rows.length-1];
   const lastPlan = [...rows].reverse().find(r => r.pAccum !== null) || last;
   const aA=last.aAccum, aDQ=last.aAccumDQ, pA=lastPlan.pAccum||0, delta=aA-pA;
-  // Compute weighted avg quality ratio across all days with actual data
-  const daysWithData = rows.filter(r => r.aAccum !== undefined && r.urbanHrs > 0);
-  const avgDQ = daysWithData.length
-    ? (daysWithData.reduce((s,r)=>s+r.dqRatio,0)/daysWithData.length)
-    : 0.75;
+  // Overall DQ%: total DQ-adjusted hours / total actual hours (weighted by driving time)
+  const overallDQ = aA > 0 ? (aDQ ?? aA*0.75) / aA : 0.75;
   document.getElementById('s-actual').textContent    = fmtH(aA);
   document.getElementById('s-actual75').textContent  = fmtH(aDQ ?? aA*.75);
   document.getElementById('s-planned').textContent   = fmtH(pA);
   document.getElementById('s-planned75').textContent = fmtH(pA*.75);
   document.getElementById('s-days').textContent      = rows.length;
   document.getElementById('s-days-sub').textContent  = (rows.length/5).toFixed(1)+' weeks';
-  document.getElementById('lbl-actual-dq').textContent = `Actual × ${Math.round(avgDQ*100)}% DQ`;
+  document.getElementById('lbl-actual-dq').textContent = `Actual × ${Math.floor(overallDQ*100)}% DQ`;
   const dEl = document.getElementById('s-delta');
   dEl.textContent = (delta>=0?'+':'')+fmtH(delta);
   dEl.className   = 'stat-value '+(delta>=0?'ok':'warn');
@@ -795,7 +817,7 @@ function renderTable(rows) {
       <td>${r.opEnd||'—'}</td>
       <td class="r">${r.g2gMins!=null?fmtDur(r.g2gMins):'—'}</td>
       <td class="r info">${fmtH(r.urbanHrs)}</td>
-      <td class="r" style="color:${r.dataQuality!=null ? (r.dataQuality>=0.9?'var(--green)':r.dataQuality>=0.8?'var(--text)':'var(--orange)') : 'var(--muted)'}">${r.dataQuality!=null ? (r.dataQuality*100).toFixed(1)+'%' : '—'}</td>
+      <td class="r" style="color:${r.dataQuality!=null ? (r.dataQuality>=0.9?'var(--green)':r.dataQuality>=0.8?'var(--text)':'var(--orange)') : 'var(--muted)'}">${r.dataQuality!=null ? Math.floor(r.dataQuality*100)+'%' : '—'}</td>
       <td class="r">${fmtH(r.planHrs)}</td>
       <td class="r ok">${r.pAccum!==null?fmtH(r.pAccum):'—'}</td>
       <td class="r info">${fmtH(r.aAccum)}</td>
@@ -1130,7 +1152,7 @@ function saveState() {
   } catch(e) { console.warn('Save failed:', e); }
 }
 
-const STATE_VERSION = '2026.7';
+const STATE_VERSION = '2026.8';
 
 function loadState() {
   try {
