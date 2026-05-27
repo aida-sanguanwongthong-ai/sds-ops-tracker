@@ -836,6 +836,7 @@ function renderChart(rows) {
         {label:'Actual × DQ%',data:a75, borderColor:'#0ea5e9',borderWidth:1.5,borderDash:[5,4],pointRadius:2,fill:false,tension:.2},
         {label:'Planned Accum.',data:pA, borderColor:'#4b5563',borderWidth:1.5,pointRadius:2,backgroundColor:'rgba(75,85,99,.05)',fill:false,tension:.2},
         {label:'Planned × 75%',data:p75,borderColor:'#374151',borderWidth:1,  borderDash:[5,4],pointRadius:0,fill:false,tension:.2},
+        {label:'200h Target',  data:labels.map(()=>200),borderColor:'rgba(251,146,60,.45)',borderWidth:1,borderDash:[4,4],pointRadius:0,fill:false,tension:0},
       ]
     },
     options:{
