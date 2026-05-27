@@ -170,7 +170,7 @@
 <script>
 // ── SEED DATA (historical, fixed) ─────────────────────────────────────────
 const SEED_DATA = [
-  {date:'2026-04-22',routes:['Heiwajima'],source:'history',opStart:'11:17',opEnd:'15:32',g2gMins:255, lunchMins:60, totalHrs:3.25, startOdo:71467,endOdo:71514,km:47,  planHrs:0,
+  {date:'2026-04-22',routes:['Heiwajima'],source:'history',opStart:'11:17',opEnd:'15:32',g2gMins:255, lunchMins:60, totalHrs:3.25, startOdo:71467,endOdo:71514,km:47,  planHrs:0,botSecs:9180,
    laps:[
      {route:'Heiwajima urban',         lap:1, startTime:'11:17',startMins:677,  lapMins:28},
      {route:'Heiwajima urban',         lap:2, startTime:'11:47',startMins:707,  lapMins:31},
@@ -178,13 +178,13 @@ const SEED_DATA = [
      {route:'昭和島ループ',             lap:1, startTime:'14:22',startMins:862,  lapMins:28},
      {route:'高速ルート',               lap:2, startTime:'14:50',startMins:890,  lapMins:31},
    ]},
-  {date:'2026-04-23',routes:['Heiwajima'],source:'history',opStart:'10:11',opEnd:'11:45',g2gMins:94,  lunchMins:0,  totalHrs:1.57, startOdo:71514,endOdo:71545,km:31,  planHrs:0,
+  {date:'2026-04-23',routes:['Heiwajima'],source:'history',opStart:'10:11',opEnd:'11:45',g2gMins:94,  lunchMins:0,  totalHrs:1.57, startOdo:71514,endOdo:71545,km:31,  planHrs:0,botSecs:5520,
    laps:[
      {route:'昭和島ループ',             lap:1, startTime:'10:11',startMins:611,  lapMins:27},
      {route:'平和島ループ',             lap:1, startTime:'10:41',startMins:641,  lapMins:24},
      {route:'高速道路込みループ',       lap:1, startTime:'11:08',startMins:668,  lapMins:37},
    ]},
-  {date:'2026-04-24',routes:['Heiwajima'],source:'history',opStart:'09:50',opEnd:'17:40',g2gMins:470, lunchMins:60, totalHrs:6.83, startOdo:71545,endOdo:71630,km:85,  planHrs:0,
+  {date:'2026-04-24',routes:['Heiwajima'],source:'history',opStart:'09:50',opEnd:'17:40',g2gMins:470, lunchMins:60, totalHrs:6.83, startOdo:71545,endOdo:71630,km:85,  planHrs:0,botSecs:25568,
    laps:[
      {route:'urban merge',             lap:1, startTime:'10:00',startMins:600,  lapMins:26},
      {route:'urban no-merge',          lap:1, startTime:'10:30',startMins:630,  lapMins:29},
@@ -1209,7 +1209,7 @@ function saveState() {
   } catch(e) { console.warn('Save failed:', e); }
 }
 
-const STATE_VERSION = '2026.13';
+const STATE_VERSION = '2026.14';
 
 function loadState() {
   try {
