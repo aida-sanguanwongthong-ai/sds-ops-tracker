@@ -93,7 +93,7 @@
 <!-- STATS -->
 <section class="stats-row">
   <div class="stat"><div class="stat-label">Actual Accum.</div><div class="stat-value info" id="s-actual">—</div><div class="stat-sub">total hrs logged</div></div>
-  <div class="stat"><div class="stat-label" id="lbl-actual-dq">Actual × DQ%</div><div class="stat-value" id="s-actual75">—</div><div class="stat-sub">quality-adjusted</div></div>
+  <div class="stat"><div class="stat-label">DQ Hours</div><div class="stat-value" id="s-actual75">—</div><div class="stat-sub">quality-adjusted accum.</div></div>
   <div class="stat"><div class="stat-label">Planned Accum.</div><div class="stat-value ok" id="s-planned">—</div><div class="stat-sub">target to date</div></div>
   <div class="stat"><div class="stat-label">Planned × 75%</div><div class="stat-value" id="s-planned75">—</div><div class="stat-sub">→ 200h milestone</div></div>
   <div class="stat"><div class="stat-label">Days Logged</div><div class="stat-value" id="s-days">—</div><div class="stat-sub" id="s-days-sub">—</div></div>
@@ -458,6 +458,30 @@ const SEED_DATA = [
      {route:'Heiwajima urban route (ロータリーなし)',lap:21, startTime:'18:38',startMins:1118, lapMins:22},
      {route:'Heiwajima urban route (ロータリーなし)',lap:22, startTime:'19:02',startMins:1142, lapMins:22},
    ]},
+  {date:'2026-05-27',routes:['Heiwajima'],source:'history',opStart:'07:20',opEnd:'19:16',g2gMins:716, lunchMins:60, totalHrs:10.93,startOdo:73350,endOdo:73499,km:149, planHrs:8,
+   laps:[
+     {route:'Heiwajima urban route (ロータリーなし)',lap:1,  startTime:'07:25',startMins:445,  lapMins:26},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:2,  startTime:'07:53',startMins:473,  lapMins:26},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:3,  startTime:'08:22',startMins:502,  lapMins:32},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:4,  startTime:'09:00',startMins:540,  lapMins:23},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:5,  startTime:'09:25',startMins:565,  lapMins:27},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:6,  startTime:'09:53',startMins:593,  lapMins:25},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:7,  startTime:'10:35',startMins:635,  lapMins:27},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:8,  startTime:'11:03',startMins:663,  lapMins:23},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:9,  startTime:'11:28',startMins:688,  lapMins:24},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:10, startTime:'11:58',startMins:718,  lapMins:24},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:11, startTime:'12:24',startMins:744,  lapMins:26},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:12, startTime:'14:27',startMins:867,  lapMins:25},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:13, startTime:'14:53',startMins:893,  lapMins:23},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:14, startTime:'15:21',startMins:921,  lapMins:21},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:15, startTime:'15:44',startMins:944,  lapMins:22},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:16, startTime:'16:15',startMins:975,  lapMins:21},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:17, startTime:'16:37',startMins:997,  lapMins:20},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:18, startTime:'17:01',startMins:1021, lapMins:29},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:19, startTime:'17:32',startMins:1052, lapMins:23},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:20, startTime:'18:06',startMins:1086, lapMins:22},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:21, startTime:'18:30',startMins:1110, lapMins:20},
+   ]},
 ];
 
 // ── STATE ──────────────────────────────────────────────────────────────────
@@ -776,15 +800,12 @@ function renderStats(rows) {
   const last = rows[rows.length-1];
   const lastPlan = [...rows].reverse().find(r => r.pAccum !== null) || last;
   const aA=last.aAccum, aDQ=last.aAccumDQ, pA=lastPlan.pAccum||0, delta=aA-pA;
-  // Overall DQ%: total DQ-adjusted hours / total actual hours (weighted by driving time)
-  const overallDQ = aA > 0 ? (aDQ ?? aA*0.75) / aA : 0.75;
   document.getElementById('s-actual').textContent    = fmtH(aA);
   document.getElementById('s-actual75').textContent  = fmtH(aDQ ?? aA*.75);
   document.getElementById('s-planned').textContent   = fmtH(pA);
   document.getElementById('s-planned75').textContent = fmtH(pA*.75);
   document.getElementById('s-days').textContent      = rows.length;
   document.getElementById('s-days-sub').textContent  = (rows.length/5).toFixed(1)+' weeks';
-  document.getElementById('lbl-actual-dq').textContent = `Actual × ${Math.floor(overallDQ*100)}% DQ`;
   const dEl = document.getElementById('s-delta');
   dEl.textContent = (delta>=0?'+':'')+fmtH(delta);
   dEl.className   = 'stat-value '+(delta>=0?'ok':'warn');
