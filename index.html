@@ -511,6 +511,31 @@ const SEED_DATA = [
      {route:'Heiwajima urban route (ロータリーなし)',lap:21, startTime:'18:43',startMins:1123, lapMins:20},
      {route:'Heiwajima urban route (ロータリーなし)',lap:22, startTime:'19:04',startMins:1144, lapMins:18},
    ]},
+  {date:'2026-05-29',routes:['Heiwajima'],source:'history',opStart:'07:18',opEnd:'19:43',g2gMins:745, lunchMins:60, totalHrs:11.42,startOdo:73649,endOdo:73805,km:156, planHrs:8,
+   laps:[
+     {route:'Heiwajima urban route (ロータリーなし)',lap:1,  startTime:'07:18',startMins:438,  lapMins:27},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:2,  startTime:'07:50',startMins:470,  lapMins:28},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:3,  startTime:'08:20',startMins:500,  lapMins:35},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:4,  startTime:'08:59',startMins:539,  lapMins:33},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:5,  startTime:'09:35',startMins:575,  lapMins:29},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:6,  startTime:'10:37',startMins:637,  lapMins:22},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:7,  startTime:'11:03',startMins:663,  lapMins:24},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:8,  startTime:'11:29',startMins:689,  lapMins:28},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:9,  startTime:'11:58',startMins:718,  lapMins:24},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:10, startTime:'12:24',startMins:744,  lapMins:24},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:11, startTime:'12:49',startMins:769,  lapMins:26},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:12, startTime:'14:20',startMins:860,  lapMins:29},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:13, startTime:'14:51',startMins:891,  lapMins:25},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:14, startTime:'15:17',startMins:917,  lapMins:20},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:15, startTime:'15:40',startMins:940,  lapMins:23},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:16, startTime:'16:18',startMins:978,  lapMins:23},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:17, startTime:'16:42',startMins:1002, lapMins:26},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:18, startTime:'17:10',startMins:1030, lapMins:23},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:19, startTime:'17:34',startMins:1054, lapMins:28},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:20, startTime:'18:09',startMins:1089, lapMins:24},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:21, startTime:'18:36',startMins:1116, lapMins:21},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:22, startTime:'18:58',startMins:1138, lapMins:19},
+   ]},
 ];
 
 // ── STATE ──────────────────────────────────────────────────────────────────
@@ -523,6 +548,15 @@ let lapChartMode = 'dow'; // 'dow' | 'hour'
 let _lapRows = null;
 
 // ── UTILS ──────────────────────────────────────────────────────────────────
+// All "today" and date arithmetic uses JST (UTC+9) so the tracker shows the
+// correct date regardless of where the browser is running.
+function todayJST() {
+  return new Date(Date.now() + 9*3600*1000).toISOString().slice(0,10);
+}
+function nextDate(dateStr) {
+  const [y,m,d] = dateStr.split('-').map(Number);
+  return new Date(Date.UTC(y, m-1, d+1)).toISOString().slice(0,10);
+}
 const toNum = v => parseFloat(String(v||0).replace(/,/g,''))||0;
 const fmtH  = h => (h===null||h===undefined||isNaN(h)) ? '—' : h.toFixed(1)+'h';
 const minToHHMM = m => { if(m===null||m===undefined)return '—'; const h=Math.floor(Math.abs(m)/60),mn=Math.abs(m)%60; return `${String(h).padStart(2,'0')}:${String(mn).padStart(2,'0')}`; };
@@ -617,7 +651,7 @@ function normaliseDate(s) {
   if (m) return `2026-${m[1].padStart(2,'0')}-${m[2].padStart(2,'0')}`;
   // Japanese 5月20日
   m = s.match(/(\d{1,2})月(\d{1,2})日/);
-  if (m) return `${new Date().getFullYear()}-${m[1].padStart(2,'0')}-${m[2].padStart(2,'0')}`;
+  if (m) return `${todayJST().slice(0,4)}-${m[1].padStart(2,'0')}-${m[2].padStart(2,'0')}`;
   return null;
 }
 
@@ -657,7 +691,7 @@ function parseSlack() {
     const d = normaliseDate(l.trim());
     if (d) { date = d; break; }
   }
-  if (!date) date = new Date().toISOString().slice(0,10);
+  if (!date) date = todayJST();
 
   // Match: timestamp + context + 開始|終了
   // Pattern handles: "15:29 Heiwajima urban route 1周目終了" and "15:30 Heiwajima urban route 2周目開始"
@@ -808,9 +842,7 @@ function rerender() {
     let curPAccum = lastRow.pAccum;
     let safety    = 0;
     while (curPAccum * 0.75 < threshold && safety++ < 500) {
-      const d = new Date(curDate + 'T00:00:00');
-      d.setDate(d.getDate() + 1);
-      curDate   = d.toISOString().slice(0, 10);
+      curDate = nextDate(curDate);
       curPAccum = +(curPAccum + 8).toFixed(2);
       projRows.push({ date: curDate, pAccum: curPAccum, aAccum: null, totalHrs: null,
         routes: [], source: 'projected', opStart: null, opEnd: null,
@@ -921,7 +953,7 @@ function renderLapTable(rows) {
   if (!tbody) return;
   const allLaps = [];
   rows.forEach(r => {
-    const dow = DAY[new Date(r.date + 'T00:00:00').getDay()];
+    const dow = DAY[new Date(r.date + 'T00:00:00Z').getDay()];
     if (r.laps && r.laps.length) {
       // Full lap detail from Slack parse
       r.laps.forEach(l => allLaps.push({ date: r.date.slice(5), day: dow, ...l }));
@@ -1029,7 +1061,7 @@ function renderLapChart(rows) {
     const bucket  = {};
     lapsForRoute.forEach(({ lapMins, date, startMins }) => {
       if (startMins == null) return;
-      const d   = new Date(date + 'T00:00:00');
+      const d   = new Date(date + 'T00:00:00Z');
       const dow = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()];
       if (!(dow in DOW_IDX)) return;
       const h   = Math.floor(startMins / 60);
@@ -1051,7 +1083,7 @@ function renderLapChart(rows) {
     const DOW  = ['Mon','Tue','Wed','Thu','Fri'];
     const byDay = { Mon:[],Tue:[],Wed:[],Thu:[],Fri:[] };
     lapsForRoute.forEach(({ lapMins, date }) => {
-      const d   = new Date(date + 'T00:00:00');
+      const d   = new Date(date + 'T00:00:00Z');
       const day = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()];
       if (byDay[day]) byDay[day].push(lapMins);
     });
@@ -1235,7 +1267,7 @@ function saveState() {
   } catch(e) { console.warn('Save failed:', e); }
 }
 
-const STATE_VERSION = '2026.15';
+const STATE_VERSION = '2026.16';
 
 function loadState() {
   try {
