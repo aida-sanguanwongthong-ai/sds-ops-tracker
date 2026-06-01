@@ -511,7 +511,7 @@ const SEED_DATA = [
      {route:'Heiwajima urban route (ロータリーなし)',lap:21, startTime:'18:43',startMins:1123, lapMins:20},
      {route:'Heiwajima urban route (ロータリーなし)',lap:22, startTime:'19:04',startMins:1144, lapMins:18},
    ]},
-  {date:'2026-05-29',routes:['Heiwajima'],source:'history',opStart:'07:18',opEnd:'19:43',g2gMins:745, lunchMins:60, totalHrs:11.42,startOdo:73649,endOdo:73805,km:156, planHrs:8,
+  {date:'2026-05-29',routes:['Heiwajima'],source:'history',opStart:'07:18',opEnd:'19:43',g2gMins:745, lunchMins:60, totalHrs:11.42,startOdo:73649,endOdo:73805,km:156, planHrs:8,dataQuality:0.850,botSecs:39257,
    laps:[
      {route:'Heiwajima urban route (ロータリーなし)',lap:1,  startTime:'07:18',startMins:438,  lapMins:27},
      {route:'Heiwajima urban route (ロータリーなし)',lap:2,  startTime:'07:50',startMins:470,  lapMins:28},
@@ -1267,7 +1267,7 @@ function saveState() {
   } catch(e) { console.warn('Save failed:', e); }
 }
 
-const STATE_VERSION = '2026.16';
+const STATE_VERSION = '2026.17';
 
 function loadState() {
   try {
