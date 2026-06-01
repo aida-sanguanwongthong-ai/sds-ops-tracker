@@ -462,7 +462,7 @@ const SEED_DATA = [
      {route:'Heiwajima urban route (ロータリーなし)',lap:21, startTime:'18:38',startMins:1118, lapMins:22},
      {route:'Heiwajima urban route (ロータリーなし)',lap:22, startTime:'19:02',startMins:1142, lapMins:22},
    ]},
-  {date:'2026-05-27',routes:['Heiwajima'],source:'history',opStart:'07:20',opEnd:'19:16',g2gMins:716, lunchMins:60, totalHrs:10.93,startOdo:73350,endOdo:73499,km:149, planHrs:8,botSecs:19510,
+  {date:'2026-05-27',routes:['Heiwajima'],source:'history',opStart:'07:20',opEnd:'19:16',g2gMins:716, lunchMins:60, totalHrs:10.93,startOdo:73350,endOdo:73499,km:149, planHrs:8,dataQuality:0.869,botSecs:35295,
    laps:[
      {route:'Heiwajima urban route (ロータリーなし)',lap:1,  startTime:'07:25',startMins:445,  lapMins:26},
      {route:'Heiwajima urban route (ロータリーなし)',lap:2,  startTime:'07:53',startMins:473,  lapMins:26},
@@ -486,7 +486,7 @@ const SEED_DATA = [
      {route:'Heiwajima urban route (ロータリーなし)',lap:20, startTime:'18:06',startMins:1086, lapMins:22},
      {route:'Heiwajima urban route (ロータリーなし)',lap:21, startTime:'18:30',startMins:1110, lapMins:20},
    ]},
-  {date:'2026-05-28',routes:['Heiwajima'],source:'history',opStart:'07:20',opEnd:'19:26',g2gMins:726, lunchMins:60, totalHrs:11.10,startOdo:73499,endOdo:73649,km:150, planHrs:8,
+  {date:'2026-05-28',routes:['Heiwajima'],source:'history',opStart:'07:20',opEnd:'19:26',g2gMins:726, lunchMins:60, totalHrs:11.10,startOdo:73499,endOdo:73649,km:150, planHrs:8,dataQuality:0.804,botSecs:38395,
    laps:[
      {route:'Heiwajima urban route (ロータリーなし)',lap:1,  startTime:'07:20',startMins:440,  lapMins:27},
      {route:'Heiwajima urban route (ロータリーなし)',lap:2,  startTime:'07:50',startMins:470,  lapMins:30},
@@ -1267,7 +1267,7 @@ function saveState() {
   } catch(e) { console.warn('Save failed:', e); }
 }
 
-const STATE_VERSION = '2026.17';
+const STATE_VERSION = '2026.18';
 
 function loadState() {
   try {
