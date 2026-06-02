@@ -752,7 +752,10 @@ function parseSlack() {
   if (first && last && last.mins > first.mins) g2gMins = last.mins - first.mins;
 
   const lunchMins = autoLunch(g2gMins);
-  const totalHrs  = g2gMins !== null ? minToHrs(g2gMins - lunchMins) : null;
+  const laps = pairLaps(mergeEvents);
+  const lapTotalMins = laps.reduce((s, l) => s + (l.lapMins || 0), 0);
+  const totalHrs = lapTotalMins > 0 ? +(lapTotalMins / 60).toFixed(2)
+                 : g2gMins !== null  ? minToHrs(g2gMins - lunchMins) : null;
 
   // ODO
   const odoMatches = [...raw.matchAll(/ODO[\s:：]*(\d{4,6})/gi)];
@@ -765,7 +768,6 @@ function parseSlack() {
     ...new Set(otherEvents.map(e=>e.route).filter(Boolean)),
     ...new Set(hwExcluded.map(e=>e.route).filter(Boolean)),
   ];
-  const laps = pairLaps(mergeEvents);
 
   pendingSlack = {
     date, routes: routesSeen, source: 'slack',
@@ -792,7 +794,7 @@ function parseSlack() {
     `<b>Op End (last 終了):</b> ${last?minsToTime24(last.mins):'—'}`,
     `<b>G2G:</b> ${g2gMins!==null?fmtDur(g2gMins)+' = '+fmtH(minToHrs(g2gMins)):'—'}`,
     `<b>Lunch:</b> ${lunchMins?fmtDur(lunchMins)+' (auto)':'0 (G2G ≤ 4h)'}`,
-    `<b>Total hours:</b> ${fmtH(totalHrs)}`,
+    `<b>Urban hrs (Σ laps):</b> ${fmtH(totalHrs)}`,
     `<b>ODO:</b> ${startOdo||'?'} → ${endOdo||'?'}${startOdo&&endOdo?' ('+((endOdo-startOdo))+'km)':''}`,
     excludedRoutes.length ? `<b>Excluded routes:</b> ${excludedRoutes.join(', ')}` : '',
   ].filter(Boolean);
@@ -1294,7 +1296,7 @@ function saveState() {
   } catch(e) { console.warn('Save failed:', e); }
 }
 
-const STATE_VERSION = '2026.19';
+const STATE_VERSION = '2026.20';
 
 function loadState() {
   try {
