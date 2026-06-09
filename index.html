@@ -679,6 +679,28 @@ const SEED_DATA = [
      {route:'Heiwajima urban route (ロータリーなし)',lap:14, startTime:'12:47',startMins:767,  lapMins:25},
      {route:'Heiwajima urban route (ロータリーなし)',lap:15, startTime:'13:19',startMins:799,  lapMins:22},
    ]},
+  {date:'2026-06-08',routes:['Heiwajima'],source:'history',opStart:'07:18',opEnd:'19:42',g2gMins:744, lunchMins:30, totalHrs:7.80,startOdo:74646,endOdo:74791,km:145, planHrs:8,dataQuality:null,botSecs:0,
+   laps:[
+     {route:'Heiwajima urban route (ロータリーなし)',lap:1,  startTime:'07:25',startMins:445,  lapMins:26},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:2,  startTime:'07:52',startMins:472,  lapMins:30},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:3,  startTime:'08:27',startMins:507,  lapMins:27},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:4,  startTime:'09:02',startMins:542,  lapMins:26},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:5,  startTime:'09:31',startMins:571,  lapMins:32},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:6,  startTime:'10:06',startMins:606,  lapMins:24},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:7,  startTime:'10:33',startMins:633,  lapMins:26},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:8,  startTime:'11:02',startMins:662,  lapMins:23},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:9,  startTime:'11:27',startMins:687,  lapMins:23},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:10, startTime:'11:57',startMins:717,  lapMins:24},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:11, startTime:'12:27',startMins:747,  lapMins:19},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:12, startTime:'12:47',startMins:767,  lapMins:24},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:13, startTime:'13:19',startMins:799,  lapMins:28},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:14, startTime:'14:42',startMins:882,  lapMins:28},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:15, startTime:'15:28',startMins:928,  lapMins:22},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:16, startTime:'16:38',startMins:998,  lapMins:22},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:17, startTime:'17:03',startMins:1023, lapMins:24},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:18, startTime:'18:51',startMins:1131, lapMins:19},
+     {route:'Heiwajima urban route (ロータリーなし)',lap:19, startTime:'19:11',startMins:1151, lapMins:21},
+   ]},
 ];
 
 // ── STATE ──────────────────────────────────────────────────────────────────
@@ -1412,7 +1434,7 @@ function saveState() {
   } catch(e) { console.warn('Save failed:', e); }
 }
 
-const STATE_VERSION = '2026.23';
+const STATE_VERSION = '2026.24';
 
 function loadState() {
   try {
